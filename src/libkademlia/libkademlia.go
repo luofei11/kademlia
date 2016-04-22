@@ -80,9 +80,18 @@ func (e *ContactNotFoundError) Error() string {
 
 func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
-	// Find contact with provided ID
+
+	// Self is target
 	if nodeId == k.SelfContact.NodeID {
 		return &k.SelfContact, nil
+	}
+	// Find contact with provided ID
+	bucketIndex := k.FindBucket(nodeId)
+	kbucket := k.table[bucketIndex]
+	for contact in range kbucket.contacts{
+		  if contact.NodeID.Equals(nodeId){
+				  return &contact, nil
+			}
 	}
 	return nil, &ContactNotFoundError{nodeId, "Not found"}
 }
@@ -97,6 +106,7 @@ func (e *CommandFailed) Error() string {
 
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
+
 	return nil, &CommandFailed{
 		"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 }
