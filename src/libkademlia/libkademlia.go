@@ -95,6 +95,13 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	}
 	return nil, &ContactNotFoundError{nodeId, "Not found"}
 }
+func (k *Kademlia) FindBucket(nodeId ID) int{
+	//find the bucket the node falls into, return the index
+  if k.NodeID.Equals(nodeId){
+		  return -1
+	}
+	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
+}
 
 type CommandFailed struct {
 	msg string
