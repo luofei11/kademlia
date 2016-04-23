@@ -22,6 +22,7 @@ const (
 type Kademlia struct {
 	NodeID      ID
 	SelfContact Contact
+	table       RoutingTable
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -29,7 +30,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.NodeID = nodeID
 
 	// TODO: Initialize other state here as you add functionality.
-
+  k.table = NewRoutingTable()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
