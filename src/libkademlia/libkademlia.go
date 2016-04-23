@@ -23,6 +23,7 @@ type Kademlia struct {
 	NodeID      ID
 	SelfContact Contact
 	table       RoutingTable
+	data        map[ID][]byte
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -81,7 +82,6 @@ func (e *ContactNotFoundError) Error() string {
 
 func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
-
 	// Self is target
 	if nodeId == k.SelfContact.NodeID {
 		return &k.SelfContact, nil
