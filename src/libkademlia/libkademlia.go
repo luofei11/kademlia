@@ -31,7 +31,8 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.NodeID = nodeID
 
 	// TODO: Initialize other state here as you add functionality.
-  k.table = NewRoutingTable()
+	k.table = NewRoutingTable()
+	k.data = make(map[ID][]byte)
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
