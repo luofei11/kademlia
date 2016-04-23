@@ -76,6 +76,9 @@ type ContactNotFoundError struct {
 	id  ID
 	msg string
 }
+type ValueNotFoundError struct{
+	key ID
+}
 
 func (e *ContactNotFoundError) Error() string {
 	return fmt.Sprintf("%x %s", e.id, e.msg)
@@ -153,7 +156,12 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 
 func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	// TODO: Implement
-	return []byte(""), &CommandFailed{"Not implemented"}
+	if val, ok := k.data[searchKey]; ok{
+		return val, nil
+	} else{
+		return []byte(""),
+	}
+	return []byte(""), &ValueNotFoundError{searchKey}
 }
 
 // For project 2!
