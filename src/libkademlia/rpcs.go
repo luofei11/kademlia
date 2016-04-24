@@ -54,7 +54,7 @@ type StoreRequest struct {
 
 type StoreResult struct {
 	MsgID ID
-	Err   error
+	Err   err
 }
 
 func (k *KademliaRPC) Store(req StoreRequest, res *StoreResult) error {
