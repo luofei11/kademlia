@@ -54,7 +54,7 @@ func main() {
 	fmt.Println("hostname: %s", hostname)
 	fmt.Println(rpc.DefaultRPCPath+hostname+port)
 	client, err := rpc.DialHTTPPath("tcp", firstPeerStr,
-		rpc.DefaultRPCPath+hostname+port)
+		rpc.DefaultRPCPath+port)
 	if err != nil {
 		log.Fatal("DialHTTP: ", err)
 	}
