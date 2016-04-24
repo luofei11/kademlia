@@ -96,7 +96,7 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// Find contact with provided ID
 	bucketIndex := k.FindBucket(nodeId)
 	kbucket := k.table[bucketIndex]
-	for contact in range kbucket.ContactList{
+	for contact in range kbucket {
 		  if contact.NodeID.Equals(nodeId){
 				  return &contact, nil
 			}
@@ -176,7 +176,7 @@ func (k *Kademlia) HandleUpdate() {
 		c <- k.updateChan
 		bucketIndex := k.FindBucket(c.nodeID)
 		kb := k.table[bucketIndex]
-		contains, i := kb.FindContact(c)
+		contains, i := kb.FindContactInKBucket(c)
 		if contains {
 			kb.MoveToTail(i)
 		} else {
@@ -188,7 +188,7 @@ func (k *Kademlia) HandleUpdate() {
 					if err != nil {
 						kb.Remove(0)
 						kb.AddToTail(c)
-					} 
+					}
 				}
 		}
 	}

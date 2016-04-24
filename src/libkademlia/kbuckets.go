@@ -12,7 +12,7 @@ func (table *RoutingTable) Initialize() {
   }
 }
 
-func (kb *KBucket) FindContact (c Contact) (bool, int) {
+func (kb *KBucket) FindContactInKBucket (c Contact) (bool, int) {
   for i := 0; i < len(kb); i++ {
 		temp := kb[i]
 		if temp.NodeID.Equals(c.NodeID) {
