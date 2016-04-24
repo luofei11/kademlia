@@ -13,8 +13,8 @@ func (table *RoutingTable) Initialize() {
 }
 
 func (kb *KBucket) FindContactInKBucket (c Contact) (bool, int) {
-  for i := 0; i < len(kb); i++ {
-		temp := kb[i]
+  for i := 0; i < len(*kb); i++ {
+		temp := (*kb)[i]
 		if temp.NodeID.Equals(c.NodeID) {
       return true, i
 		}
@@ -23,15 +23,15 @@ func (kb *KBucket) FindContactInKBucket (c Contact) (bool, int) {
 }
 
 func (kb *KBucket) Remove (i int) {
-	kb = append(kb[:i], kb[i+1:]...)
+	*kb = append((*kb)[:i], (*kb)[i+1:]...)
 }
 
 func (kb *KBucket) AddToTail (c Contact) {
-  kb = append(kb, c)
+  *kb = append(*kb, c)
 }
 
 func (kb *KBucket) MoveToTail (i int) {
-  c := kb[i]
+  c := (*kb)[i]
   kb.Remove(i)
   kb.AddToTail(c)
 }
