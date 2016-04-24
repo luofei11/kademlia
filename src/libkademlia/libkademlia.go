@@ -288,6 +288,9 @@ func (k *Kademlia) Update(c Contact) {
   k.updateChan <- c
 	_ = <- k.updateFinishedChan
 }
+func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
+	//TODO: add lookup request to channel
+}
 func (k *Kademlia) HandleDataStore(){
 	  for {
         kvpair := <- k.storeDataChan
