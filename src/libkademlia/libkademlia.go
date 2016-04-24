@@ -223,7 +223,12 @@ func (k *Kademlia) Update(c Contact) {
   //Update KBucket in Routing Table by Contact c
   k.updateChan <- c
 }
-
+func (k *Kademlia) HandleDataStore(){
+	  for {
+        kvpair := <- k.storeDataChan
+			  k.data[kvpair.key] = kvpair.value
+		}
+}
 func (k *Kademlia) HandleUpdate() {
 	for {
 		c := <- k.updateChan
