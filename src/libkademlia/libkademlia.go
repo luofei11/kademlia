@@ -125,8 +125,18 @@ func (e *CommandFailed) Error() string {
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
   addr := fmt.Sprintf("%v:%v", host, port)
+	//hostname,port_str,err := net.SplitHostPort(addr)
 	port_str := fmt.Sprintf("%v", port)
-	path := rpc.DefaultRPCPath + port_str
+	path := rpc.DefaultRPCPath + "localhost" + port_str
+	fmt.Println(addr)
+	fmt.Println(path)
+	/*
+	for _,kbucket := range k.table{
+		  for _, contact := range kbucket{
+				  fmt.Println(contact.NodeID)
+			}
+	}
+	*/
   client, err := rpc.DialHTTPPath("tcp", addr, path)
 	if err != nil{
 		  fmt.Println("Im here")

@@ -51,6 +51,8 @@ func main() {
 	// Your code should loop forever, reading instructions from stdin and
 	// printing their results to stdout. See README.txt for more details.
 	hostname, port, err := net.SplitHostPort(firstPeerStr)
+	fmt.Println("hostname: %s", hostname)
+	fmt.Println(rpc.DefaultRPCPath+hostname+port)
 	client, err := rpc.DialHTTPPath("tcp", firstPeerStr,
 		rpc.DefaultRPCPath+hostname+port)
 	if err != nil {
@@ -70,6 +72,8 @@ func main() {
 	}
 	log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
 	log.Printf("pong msgID: %s\n\n", pong.MsgID.AsString())
+	p := strconv.Itoa(int(pong.Sender.Port))
+	log.Printf("pong Sender: %s\n", p)
 
 	in := bufio.NewReader(os.Stdin)
 	quit := false
