@@ -1,7 +1,7 @@
 package libkademlia
 
 import (
-	//"bytes"
+	"bytes"
 	"net"
 	"strconv"
 	"testing"
