@@ -186,7 +186,7 @@ func (k *Kademlia) HandleUpdate() {
 					head := kb[0]
 					_, err := k.DoPing(head.Host, head.Port)
 					if err != nil {
-						kb.RemoveHead()
+						kb.Remove(0)
 						kb.AddToTail(c)
 					} else {
 						kb.MoveToTail(0)
