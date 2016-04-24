@@ -129,11 +129,11 @@ func (e *CommandFailed) Error() string {
 
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
-  //addr := fmt.Sprintf("%v:%v", host, port)
-	addr := host.String() + ":" + strconv.Itoa(int(port))
+  addr := fmt.Sprintf("%v:%v", host, port)
+	//addr := host.String() + ":" + strconv.Itoa(int(port))
 	//hostname,port_str,err := net.SplitHostPort(addr)
-	//port_str := fmt.Sprintf("%v", port)
-	//path := rpc.DefaultRPCPath + "localhost" + port_str
+	port_str := fmt.Sprintf("%v", port)
+	path := rpc.DefaultRPCPath + "localhost" + port_str
   //addr := fmt.Sprintf("%v:%v", host, port)
 	//port_str := fmt.Sprintf("%v", port)
 	//path := rpc.DefaultRPCPath + "localhost" + port_str
@@ -146,8 +146,8 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 			}
 	}
 	*/
-  //client, err := rpc.DialHTTPPath("tcp", addr, path)
-	client, err := rpc.DialHTTP("tcp", addr)
+  client, err := rpc.DialHTTPPath("tcp", addr, path)
+	//client, err := rpc.DialHTTP("tcp", addr)
 	if err != nil{
 		  fmt.Println("Im here")
 		  return nil, &CommandFailed{
