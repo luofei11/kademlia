@@ -132,7 +132,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	if err != nil{
 		  return nil, err
 	}
-	k.table.Update(pong.Sender)
+	k.Update(pong.Sender)
 	return &pong.Sender, nil
 	//return nil, &CommandFailed{
 		//"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
