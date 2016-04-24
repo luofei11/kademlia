@@ -129,9 +129,7 @@ func (e *CommandFailed) Error() string {
 
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
-<<<<<<< Updated upstream
   addr := fmt.Sprintf("%v:%v", host, port)
-	//hostname,port_str,err := net.SplitHostPort(addr)
 	port_str := fmt.Sprintf("%v", port)
 	path := rpc.DefaultRPCPath + "localhost" + port_str
 	fmt.Println(addr)
@@ -143,15 +141,6 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 			}
 	}
 	*/
-=======
-  //addr := fmt.Sprintf("%v:%v", host, port)
-	//port_str := fmt.Sprintf("%v", port)
-	port_str := strconv.Itoa(int(port))
-	addr := host.String() + ":" + port_str
-	path := rpc.DefaultRPCPath + "localhost" + port_str
-	fmt.Println(addr)
-	fmt.Println(path)
->>>>>>> Stashed changes
   client, err := rpc.DialHTTPPath("tcp", addr, path)
 	if err != nil{
 		  fmt.Println("Im here")
