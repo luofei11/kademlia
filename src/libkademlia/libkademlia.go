@@ -188,9 +188,7 @@ func (k *Kademlia) HandleUpdate() {
 					if err != nil {
 						kb.Remove(0)
 						kb.AddToTail(c)
-					} else {
-						kb.MoveToTail(0)
-					}
+					} 
 				}
 		}
 	}
