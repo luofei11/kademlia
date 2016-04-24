@@ -134,6 +134,9 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	//hostname,port_str,err := net.SplitHostPort(addr)
 	//port_str := fmt.Sprintf("%v", port)
 	//path := rpc.DefaultRPCPath + "localhost" + port_str
+  //addr := fmt.Sprintf("%v:%v", host, port)
+	//port_str := fmt.Sprintf("%v", port)
+	//path := rpc.DefaultRPCPath + "localhost" + port_str
 	fmt.Println(addr)
 	//fmt.Println(path)
 	/*
@@ -153,11 +156,14 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	fmt.Println("passed 1")
 	defer client.Close()
   ping := PingMessage{k.SelfContact, NewRandomID()}
+	//fmt.Println("ping", ping)
 	var pong PongMessage
+	//fmt.Println("pong", pong)
 	err = client.Call("KademliaRPC.Ping", ping, &pong)
 	if err != nil{
 		  return nil, err
 	}
+	//fmt.Println("pong", pong)
 	k.Update(pong.Sender)
 	return &pong.Sender, nil
 	//return nil, &CommandFailed{
@@ -221,16 +227,20 @@ func (k *Kademlia) Update(c Contact) {
 func (k *Kademlia) HandleUpdate() {
 	for {
 		c := <- k.updateChan
+		//fmt.Println("New Contact to Update:",c)
+		//fmt.Println("Original Kademlia:", k)
 		bucketIndex := k.FindBucket(c.NodeID)
-		kb := k.table[bucketIndex]
+		//fmt.Println("bucketIndex:", bucketIndex)
+		kb := &k.table[bucketIndex]
+		//fmt.Println("Original kbucket:", kb)
 		contains, i := kb.FindContactInKBucket(c)
 		if contains {
 			kb.MoveToTail(i)
 		} else {
-				if len(kb) < cap(kb) {
+				if len(*kb) < cap(*kb) {
 					kb.AddToTail(c)
 				} else {
-					head := kb[0]
+					head := (*kb)[0]
 					_, err := k.DoPing(head.Host, head.Port)
 					if err != nil {
 						kb.Remove(0)
@@ -238,6 +248,8 @@ func (k *Kademlia) HandleUpdate() {
 					}
 				}
 		}
+		//fmt.Println("Updated kbucket:", kb)
+		//fmt.Println("Updated Kademlia:", k)
 	}
 }
 
