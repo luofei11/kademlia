@@ -165,7 +165,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	if err != nil{
 		  return nil, err
 	}
-	fmt.Println("pong", pong)
+	//fmt.Println("pong", pong)
 	k.Update(pong.Sender)
 	return &pong.Sender, nil
 	//return nil, &CommandFailed{
@@ -258,23 +258,23 @@ func (k *Kademlia) HandleDataStore(){
 func (k *Kademlia) HandleUpdate() {
 	for {
 		c := <- k.updateChan
-		fmt.Println("New Contact to Update:",c)
-		fmt.Println("Original Kademlia:", k)
+		//fmt.Println("New Contact to Update:",c)
+		//fmt.Println("Original Kademlia:", k)
 		bucketIndex := k.FindBucket(c.NodeID)
-		fmt.Println("bucketIndex:", bucketIndex)
+		//fmt.Println("bucketIndex:", bucketIndex)
 		kb := &k.table[bucketIndex]
-		fmt.Println("Original kbucket:", kb)
+		//fmt.Println("Original kbucket:", kb)
 		contains, i := kb.FindContactInKBucket(c)
 		if contains {
-			fmt.Println("contains")
+			//fmt.Println("contains")
 			kb.MoveToTail(i)
 		} else {
-				fmt.Println("not contains")
+				//fmt.Println("not contains")
 				if len(*kb) < cap(*kb) {
-					fmt.Println("not filled")
+					//fmt.Println("not filled")
 					kb.AddToTail(c)
 				} else {
-					fmt.Println("filled")
+					//fmt.Println("filled")
 					head := (*kb)[0]
 					_, err := k.DoPing(head.Host, head.Port)
 					if err != nil {
@@ -284,7 +284,7 @@ func (k *Kademlia) HandleUpdate() {
 				}
 		}
 		//fmt.Println("Updated kbucket:", kb)
-		fmt.Println("Updated Kademlia:", k)
+		//fmt.Println("Updated Kademlia:", k)
 		k.updateFinishedChan <- true
 	}
 }
