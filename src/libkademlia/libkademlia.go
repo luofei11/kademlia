@@ -153,7 +153,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
-	fmt.Println("passed 1")
+	//fmt.Println("passed 1")
 	defer client.Close()
   ping := PingMessage{k.SelfContact, NewRandomID()}
 	//fmt.Println("ping", ping)
