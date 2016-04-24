@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"testing"
+	"log"
 	//"time"
 )
 
@@ -41,7 +42,11 @@ func TestPing(t *testing.T) {
 		t.Error("Instance 2 should not be able to find instance " +
 			"1 in its buckets before ping instance 1")
 	}
+	log.Printf("instance1: %v\n", instance1)
+	log.Printf("instance2: %v\n", instance2)
 	instance1.DoPing(host2, port2)
+	log.Printf("instance1: %v\n", instance1)
+	log.Printf("instance2: %v\n", instance2)
 	contact2, err = instance1.FindContact(instance2.NodeID)
 	if err != nil {
 		t.Error("Instance 2's contact not found in Instance 1's contact list")
