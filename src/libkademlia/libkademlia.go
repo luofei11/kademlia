@@ -274,7 +274,7 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	} else {
 		return nil, nil, &CommandFailed{"Value Not Found"}
 	}
-	//return nil, nil, &CommandFailed{"Not implemented"}
+	return nil, nil, &CommandFailed{"Not implemented"}
 }
 
 func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
