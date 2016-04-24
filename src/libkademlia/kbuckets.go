@@ -9,14 +9,17 @@ import (
 )
 
 type KBucket struct {
-  var ContactList []Contact
+  ContactList []Contact
   updateContactChan chan Contact
 }
 
 type RoutingTable [IDBits]KBucket
 
-func NewRoutingTable() *RoutingTable{
-  talbe := new(RoutingTable)
+func (table *RoutingTable) Initialize() {
+  for i := 0; i < IDBits; i++ {
+    table[i].ContactList = make([]Contact, 0, k)
+    table[i].updateContactChan = make(chan Contact)
+  }
 }
 
 func (kb *KBucket) Update (c Contact) {

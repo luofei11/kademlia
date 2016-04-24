@@ -31,7 +31,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.NodeID = nodeID
 
 	// TODO: Initialize other state here as you add functionality.
-	k.table = NewRoutingTable()
+	k.table.Initialize()
 	k.data = make(map[ID][]byte)
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
@@ -106,6 +106,13 @@ func (k *Kademlia) FindBucket(nodeId ID) int{
 		  return -1
 	}
 	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
+}
+
+func (k *Kademlia) Update(c Contact) int{
+	//Update KBucket in Routing Table by Contact c
+	bucketIndex := k.FindBucket(c.nodeID)
+	kbucket := k.table[bucketIndex]
+  kbucket.Update(c)
 }
 
 type CommandFailed struct {
