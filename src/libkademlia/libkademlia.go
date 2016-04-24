@@ -110,6 +110,9 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	}
 	// Find contact with provided ID
 	bucketIndex := k.FindBucket(nodeId)
+	if bucketIndex == -1 {
+		return nil, &ContactNotFoundError{nodeId, "Not found"}
+	}
 	//log.Printf("I found index!:", bucketIndex)
 	kbucket := k.table[bucketIndex]
 	for _, contact := range kbucket {
@@ -324,6 +327,10 @@ func (k *Kademlia) HandleUpdate() {
 		//fmt.Println("New Contact to Update:",c)
 		//fmt.Println("Original Kademlia:", k)
 		bucketIndex := k.FindBucket(c.NodeID)
+		if bucketIndex == -1 {
+			k.updateFinishedChan <- true
+			continue
+		}
 		//fmt.Println("bucketIndex:", bucketIndex)
 		kb := &k.table[bucketIndex]
 		//fmt.Println("Original kbucket:", kb)
