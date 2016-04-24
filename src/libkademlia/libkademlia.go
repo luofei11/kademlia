@@ -332,7 +332,48 @@ func (k *Kademlia) HandleUpdate() {
 }
 
 func (k *Kademlia) FindClosest(key ID) []Contact {
-	
+	prefixLen := k.NodeID.Xor(key).PrefixLen()
+	var index int
+	if prefixLen == 160 {
+		index = 0
+		} else {
+		index = 159 - prefixLen
+	}
+	contacts := make([]Contact, 0, 20)
+	for _, val := range k.table[index] {
+		contacts = append(contacts, val)
+	}
+
+	if len(contacts) == 20 {
+		return contacts
+	}
+
+	// algorithm to add k elements to contacts slice and return it
+	left := index
+	right := index
+	for {
+		if left == 0 && right == 159 {
+			return contacts
+		}
+		if left != 0 {
+			left -= 1
+		}
+		if right != 159 {
+			right += 1
+		}
+
+		for _, val := range k.table[right] {
+			if val.Host != nil {
+				contacts = append(contacts, val)
+			}
+		}
+
+		for _, val := range k.table[left] {
+			if val.Host != nil {
+				contacts = append(contacts, val)
+			}
+		}
+	}
 }
 
 // For project 2!
