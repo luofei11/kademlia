@@ -210,10 +210,11 @@ func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 
 func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error) {
 	// TODO: Implement
+	addr := fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port)
 	port_str := strconv.Itoa(int((*contact).Port))
 	client, err := rpc.DialHTTPPath(
 		"tcp",
-		fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port),
+		addr,
 		rpc.DefaultRPCPath+port_str,
 	)
 	if err != nil {
