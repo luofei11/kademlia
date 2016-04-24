@@ -8,20 +8,12 @@ import (
 	"math/rand"
 )
 
-type KBucket struct {
-  ContactList []Contact
-  updateContactChan chan Contact
-}
+type KBucket []Contact
 
 type RoutingTable [IDBits]KBucket
 
 func (table *RoutingTable) Initialize() {
   for i := 0; i < IDBits; i++ {
-    table[i].ContactList = make([]Contact, 0, k)
-    table[i].updateContactChan = make(chan Contact)
+    table[i] = make([]Contact, 0, k)
   }
-}
-
-func (kb *KBucket) Update (c Contact) {
-  kb.updateContactChan <- c
 }

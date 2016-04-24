@@ -24,6 +24,7 @@ type Kademlia struct {
 	SelfContact Contact
 	table       RoutingTable
 	data        map[ID][]byte
+	updateChan chan Contact
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -33,6 +34,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	// TODO: Initialize other state here as you add functionality.
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
+	go k.HandleUpdate()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
@@ -108,13 +110,6 @@ func (k *Kademlia) FindBucket(nodeId ID) int{
 	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
 }
 
-func (k *Kademlia) Update(c Contact) int{
-	//Update KBucket in Routing Table by Contact c
-	bucketIndex := k.FindBucket(c.nodeID)
-	kbucket := k.table[bucketIndex]
-  kbucket.Update(c)
-}
-
 type CommandFailed struct {
 	msg string
 }
@@ -169,6 +164,36 @@ func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 		return []byte(""),
 	}
 	return []byte(""), &ValueNotFoundError{searchKey}
+}
+
+func (k *Kademlia) Update (c Contact) {
+  //Update KBucket in Routing Table by Contact c
+  k.updateChan <- c
+}
+
+func (k *Kademlia) HandleUpdate() {
+	for {
+		c <- k.updateChan
+		bucketIndex := k.FindBucket(c.nodeID)
+		kb := k.table[bucketIndex]
+		contains, i := kb.FindContact(c)
+		if contains {
+			kb.MoveToTail(i)
+		} else {
+				if len(kb) < cap(kb) {
+					kb.AddToTail(c)
+				} else {
+					head := kb[0]
+					_, err := k.DoPing(head.Host, head.Port)
+					if err != nil {
+						kb.RemoveHead()
+						kb.AddToTail(c)
+					} else {
+						kb.MoveToTail(0)
+					}
+				}
+		}
+	}
 }
 
 // For project 2!
