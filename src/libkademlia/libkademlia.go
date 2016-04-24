@@ -203,7 +203,30 @@ func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 
 func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error) {
 	// TODO: Implement
-	return nil, &CommandFailed{"Not implemented"}
+	port_str := strconv.Itoa(int((*contact).Port))
+	client, err := rpc.DialHTTPPath(
+		"tcp",
+		fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port),
+		rpc.DefaultRPCPath+port_str,
+	)
+	if err != nil {
+		//fmt.Println("ERR: " + err.Error())
+		return  []Contact{}, err
+	}
+	defer client.Close()
+	req := FindNodeRequest{k.SelfContact, NewRandomID(), searchKey}
+	var res FindNodeResult
+	err = client.Call("KademliaRPC.FindNode", req, &res)
+	if err != nil {
+		client.Close()
+		//fmt.Println("ERR: " + err.Error())
+		return []Contact{} ,err
+	}
+	for _, each := range res.Nodes {
+		k.Update(each)
+	}
+	//return fmt.Sprintf("OK: Found %d Nodes", len(res.Nodes))
+	//return nil, &CommandFailed{"Not implemented"}
 }
 
 func (k *Kademlia) DoFindValue(contact *Contact,
@@ -226,7 +249,12 @@ func (k *Kademlia) Update(c Contact) {
   k.updateChan <- c
 	_ = <- k.updateFinishedChan
 }
-
+func (k *Kademlia) HandleDataStore(){
+	  for {
+        kvpair := <- k.storeDataChan
+			  k.data[kvpair.key] = kvpair.value
+		}
+}
 func (k *Kademlia) HandleUpdate() {
 	for {
 		c := <- k.updateChan
