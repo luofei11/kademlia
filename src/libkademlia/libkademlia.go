@@ -93,7 +93,7 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// Find contact with provided ID
 	bucketIndex := k.FindBucket(nodeId)
 	kbucket := k.table[bucketIndex]
-	for contact in range kbucket.contacts{
+	for contact in range kbucket.ContactList{
 		  if contact.NodeID.Equals(nodeId){
 				  return &contact, nil
 			}
