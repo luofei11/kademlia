@@ -30,6 +30,8 @@ type Kademlia struct {
 	updateChan chan Contact
 	updateFinishedChan chan bool
 	storeDataChan chan *KVPair
+	valueLookUpChan chan ID
+	valLookUpResChan chan byte[]
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -44,6 +46,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.storeDataChan = make(chan *KVPair)
 	go k.HandleUpdate()
 	go k.HandleDataStore()
+	go k.HandleValueLookUp()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
@@ -290,11 +293,29 @@ func (k *Kademlia) Update(c Contact) {
 }
 func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
 	//TODO: add lookup request to channel
+	k.valueLookUpChan <- key
+	valLookUpResult := <- k.valLookUpResChan
+	if valLookUpResult != nil{
+		  return valLookUpResult, nil
+	}else{
+		  return nil, &ValueNotFoundError{key}
+	}
 }
 func (k *Kademlia) HandleDataStore(){
 	  for {
         kvpair := <- k.storeDataChan
 			  k.data[kvpair.key] = kvpair.value
+		}
+}
+func (k *Kademlia) HandleValueLookUp(){
+	  for {
+			  key := <- k.valueLookUpChan
+				val, err := k.LocalFindValue(key)
+				if err != nil{
+					  k.valLookUpResChan <- nil
+				}else{
+					  k.valLookUpResChan <- val
+				}
 		}
 }
 func (k *Kademlia) HandleUpdate() {
