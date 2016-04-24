@@ -96,7 +96,7 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// Find contact with provided ID
 	bucketIndex := k.FindBucket(nodeId)
 	kbucket := k.table[bucketIndex]
-	for contact in range kbucket {
+	for _, contact := range kbucket {
 		  if contact.NodeID.Equals(nodeId){
 				  return &contact, nil
 			}
@@ -131,7 +131,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	defer client.close()
   ping := PingMessage(k.SelfContact, NewRandomID())
 	var pong PongMessage
-	err := client.Call("KademliaRPC.Ping", ping, &pong)
+	err = client.Call("KademliaRPC.Ping", ping, &pong)
 	if err != nil{
 		  return nil, err
 	}
