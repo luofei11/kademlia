@@ -28,6 +28,7 @@ type Kademlia struct {
 	table       RoutingTable
 	data        map[ID][]byte
 	updateChan chan Contact
+	storeDataChan chan KVPair
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -38,6 +39,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
 	k.updateChan = make(chan Contact)
+	k.storeDataChan = make(chan KVPair)
 	go k.HandleUpdate()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
@@ -159,10 +161,34 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	//return nil, &CommandFailed{
 		//"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 }
-
+func (k * Kademlia) StoreData(pair KVPair){
+	  k.storeDataChan <- pair
+}
 func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 	// TODO: Implement
-	return &CommandFailed{"Not implemented"}
+	port_str := strconv.Itoa(int((*contact).Port))
+	client, err := rpc.DialHTTPPath(
+		"tcp",
+		fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port),
+		rpc.DefaultRPCPath+port_str,
+	)
+	if err != nil {
+		//fmt.Println("ERR: " + err.Error())
+		return err
+	}
+	defer client.Close()
+
+	req := StoreRequest{k.SelfContact, NewRandomID(), key, value}
+	var res StoreResult
+
+	err = client.Call("KademliaRPC.Store", req, &res)
+	if err != nil {
+		client.Close()
+		//fmt.Println("ERR: " + err.Error())
+		return err
+	}
+	return nil
+	//return &CommandFailed{"Not implemented"}
 }
 
 func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error) {
