@@ -228,6 +228,7 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 			response = "ERR: Unable to find contact with node ID (" + toks[1] + ")"
 			return
 		}
+		fmt.Println("Found Contact!")
 		key, err := libkademlia.IDFromString(toks[2])
 		if err != nil {
 			response = "ERR: Provided an invalid key (" + toks[2] + ")"
@@ -236,6 +237,7 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 		value := []byte(toks[3])
 
 		err = k.DoStore(contact, key, value)
+		fmt.Println("store reaches here!")
 		if err != nil {
 			response = fmt.Sprintf("ERR: %s", err)
 		} else {

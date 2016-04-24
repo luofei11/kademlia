@@ -43,6 +43,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.updateFinishedChan = make(chan bool)
 	k.storeDataChan = make(chan *KVPair)
 	go k.HandleUpdate()
+	go k.HandleDataStore()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
@@ -101,10 +102,12 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
 	// Self is target
 	if nodeId == k.SelfContact.NodeID {
+		//log.Printf("I found myself!wtf!")
 		return &k.SelfContact, nil
 	}
 	// Find contact with provided ID
 	bucketIndex := k.FindBucket(nodeId)
+	//log.Printf("I found index!:", bucketIndex)
 	kbucket := k.table[bucketIndex]
 	for _, contact := range kbucket {
 		  if contact.NodeID.Equals(nodeId){
@@ -151,7 +154,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
   client, err := rpc.DialHTTPPath("tcp", addr, path)
 	//client, err := rpc.DialHTTP("tcp", addr)
 	if err != nil{
-		  fmt.Println("Im here")
+		  //fmt.Println("Im here")
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
@@ -188,12 +191,14 @@ func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 		//fmt.Println("ERR: " + err.Error())
 		return err
 	}
+	//fmt.Println("dostore reaches here step1 !")
 	defer client.Close()
 
 	req := StoreRequest{k.SelfContact, NewRandomID(), key, value}
 	var res StoreResult
-
+  //fmt.Println("dostore reaches here step2 !")
 	err = client.Call("KademliaRPC.Store", req, &res)
+	//fmt.Println("dostore reaches here step6 !")
 	if err != nil {
 		client.Close()
 		//fmt.Println("ERR: " + err.Error())

@@ -59,11 +59,14 @@ type StoreResult struct {
 
 func (k *KademliaRPC) Store(req StoreRequest, res *StoreResult) error {
 	// TODO: Implement.
+	//fmt.Println("store reaches here step 3!")
 	go k.kademlia.Update(req.Sender)
+	//fmt.Println("store reaches here step 4!")
 	kvpair := new(KVPair)
 	kvpair.key = req.Key
 	kvpair.value = req.Value
 	k.kademlia.StoreData(kvpair)
+	//fmt.Println("store reaches here step 4!")
 	res.MsgID = CopyID(req.MsgID)
 	return nil
 }
