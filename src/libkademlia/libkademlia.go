@@ -86,6 +86,9 @@ type ValueNotFoundError struct{
 func (e *ContactNotFoundError) Error() string {
 	return fmt.Sprintf("%x %s", e.id, e.msg)
 }
+func (e *ValueNotFoundError) Error() string {
+	return fmt.Sprintf("Value not found for key: %x", e.key)
+}
 
 func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
@@ -166,7 +169,7 @@ func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	}
 }
 
-func (k *Kademlia) Update (c Contact) {
+func (k *Kademlia) Update(c Contact) {
   //Update KBucket in Routing Table by Contact c
   k.updateChan <- c
 }
