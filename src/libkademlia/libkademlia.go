@@ -218,7 +218,7 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 	if err != nil {
 		client.Close()
 		//fmt.Println("ERR: " + err.Error())
-		return []]Contact{} ,err
+		return []Contact{} ,err
 	}
 	for _, each := range res.Nodes {
 		k.Update(each)
