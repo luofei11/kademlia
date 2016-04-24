@@ -34,6 +34,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	// TODO: Initialize other state here as you add functionality.
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
+	k.updateChan = make(chan Contact)
 	go k.HandleUpdate()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
