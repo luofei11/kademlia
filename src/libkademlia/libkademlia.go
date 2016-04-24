@@ -226,7 +226,7 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 		k.Update(each)
 	}
 	//return fmt.Sprintf("OK: Found %d Nodes", len(res.Nodes))
-	//return nil, &CommandFailed{"Not implemented"}
+	return res.Nodes, nil
 }
 
 func (k *Kademlia) DoFindValue(contact *Contact,
