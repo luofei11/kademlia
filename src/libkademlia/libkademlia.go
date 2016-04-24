@@ -161,9 +161,8 @@ func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	if val, ok := k.data[searchKey]; ok{
 		return val, nil
 	} else{
-		return []byte(""),
+		return []byte(""), &ValueNotFoundError{searchKey}
 	}
-	return []byte(""), &ValueNotFoundError{searchKey}
 }
 
 func (k *Kademlia) Update (c Contact) {
