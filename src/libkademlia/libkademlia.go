@@ -125,12 +125,15 @@ func (e *CommandFailed) Error() string {
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
   addr := fmt.Sprintf("%v:%v", host, port)
-	port_str := strconv.Itoa(int(port))
-  client, err := rpc.DialHTTPPath("tcp", addr, rpc.DefaultRPCPath + port_str)
+	port_str := fmt.Sprintf("%v", port)
+	path := rpc.DefaultRPCPath + port_str
+  client, err := rpc.DialHTTPPath("tcp", addr, path)
 	if err != nil{
+		  fmt.Println("Im here")
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
+	fmt.Println("passed 1")
 	defer client.Close()
   ping := PingMessage{k.SelfContact, NewRandomID()}
 	var pong PongMessage

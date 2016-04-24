@@ -166,6 +166,7 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 				}
 			}
 			fmt.Println(host, port)
+			fmt.Println("enter host port mode")
 			contact, err = k.DoPing(host, uint16(port))
 			if err != nil {
 				response = fmt.Sprintf("ERR: %s", err)
@@ -175,6 +176,7 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 				return
 			}
 		} else {
+			fmt.Println("enter id mode")
 			c, err := k.FindContact(id)
 			if err != nil {
 				response = "ERR: Not a valid Node ID or host:port address"
