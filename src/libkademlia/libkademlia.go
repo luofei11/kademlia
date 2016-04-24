@@ -17,7 +17,10 @@ const (
 	b     = 8 * IDBytes
 	k     = 20
 )
-
+type KVPair struct {
+	  key ID
+		value []byte
+}
 // Kademlia type. You can put whatever state you need in this.
 type Kademlia struct {
 	NodeID      ID
