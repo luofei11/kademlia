@@ -176,11 +176,13 @@ func (k * Kademlia) StoreData(pair *KVPair){
 }
 func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 	// TODO: Implement
+	addr := fmt.Sprintf("%v:%v", (*contact).Host, (*contact).Port)
 	port_str := strconv.Itoa(int((*contact).Port))
+	path := rpc.DefaultRPCPath + "localhost" + port_str
 	client, err := rpc.DialHTTPPath(
 		"tcp",
-		fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port),
-		rpc.DefaultRPCPath+port_str,
+		addr,
+		path,
 	)
 	if err != nil {
 		//fmt.Println("ERR: " + err.Error())
