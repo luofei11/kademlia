@@ -28,7 +28,7 @@ type Kademlia struct {
 	table       RoutingTable
 	data        map[ID][]byte
 	updateChan chan Contact
-	storeDataChan chan KVPair
+	storeDataChan chan *KVPair
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -39,7 +39,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
 	k.updateChan = make(chan Contact)
-	k.storeDataChan = make(chan KVPair)
+	k.storeDataChan = make(chan *KVPair)
 	go k.HandleUpdate()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
@@ -129,12 +129,13 @@ func (e *CommandFailed) Error() string {
 
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
-  addr := fmt.Sprintf("%v:%v", host, port)
+  //addr := fmt.Sprintf("%v:%v", host, port)
+	addr := host.String() + ":" + strconv.Itoa(int(port))
 	//hostname,port_str,err := net.SplitHostPort(addr)
-	port_str := fmt.Sprintf("%v", port)
-	path := rpc.DefaultRPCPath + "localhost" + port_str
+	//port_str := fmt.Sprintf("%v", port)
+	//path := rpc.DefaultRPCPath + "localhost" + port_str
 	fmt.Println(addr)
-	fmt.Println(path)
+	//fmt.Println(path)
 	/*
 	for _,kbucket := range k.table{
 		  for _, contact := range kbucket{
@@ -142,7 +143,8 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 			}
 	}
 	*/
-  client, err := rpc.DialHTTPPath("tcp", addr, path)
+  //client, err := rpc.DialHTTPPath("tcp", addr, path)
+	client, err := rpc.DialHTTP("tcp", addr)
 	if err != nil{
 		  fmt.Println("Im here")
 		  return nil, &CommandFailed{
@@ -161,7 +163,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	//return nil, &CommandFailed{
 		//"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 }
-func (k * Kademlia) StoreData(pair KVPair){
+func (k * Kademlia) StoreData(pair *KVPair){
 	  k.storeDataChan <- pair
 }
 func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {

@@ -61,7 +61,7 @@ func (k *KademliaRPC) Store(req StoreRequest, res *StoreResult) error {
 	// TODO: Implement.
 	go k.kademlia.Update(req.Sender)
 	kvpair := new(KVPair)
-	kvpair.key = req.key
+	kvpair.key = req.Key
 	kvpair.value = req.Value
 	k.kademlia.StoreData(kvpair)
 	res.MsgID = CopyID(req.MsgID)
