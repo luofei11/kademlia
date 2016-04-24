@@ -31,7 +31,7 @@ func (kb *KBucket) AddToTail (c Contact) {
 }
 
 func (kb *KBucket) MoveToTail (i int) {
-  c: = kb[i]
+  c := kb[i]
   kb.Remove(i)
   kb.AddToTail(c)
 }
