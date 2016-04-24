@@ -88,6 +88,8 @@ type FindNodeResult struct {
 
 func (k *KademliaRPC) FindNode(req FindNodeRequest, res *FindNodeResult) error {
 	// TODO: Implement.
+	res.MsgID = CopyID(req.MsgID)
+	res.Nodes = k.kademlia.FindClosest(req.NodeID)
 	return nil
 }
 

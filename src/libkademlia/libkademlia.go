@@ -331,6 +331,10 @@ func (k *Kademlia) HandleUpdate() {
 	}
 }
 
+func (k *Kademlia) FindClosest(key ID) []Contact {
+	
+}
+
 // For project 2!
 func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 	return nil, &CommandFailed{"Not implemented"}
