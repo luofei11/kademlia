@@ -54,8 +54,8 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	if err != nil {
 		return nil
 	}
-	s.HandleHTTP(rpc.DefaultRPCPath+hostname+port,
-		rpc.DefaultDebugPath+hostname+port)
+	s.HandleHTTP(rpc.DefaultRPCPath+port,
+		rpc.DefaultDebugPath+port)
 	l, err := net.Listen("tcp", laddr)
 	if err != nil {
 		log.Fatal("Listen: ", err)
@@ -138,7 +138,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	//addr := host.String() + ":" + strconv.Itoa(int(port))
 	//hostname,port_str,err := net.SplitHostPort(addr)
 	port_str := fmt.Sprintf("%v", port)
-	path := rpc.DefaultRPCPath + "localhost" + port_str
+	path := rpc.DefaultRPCPath + port_str
   //addr := fmt.Sprintf("%v:%v", host, port)
 	//port_str := fmt.Sprintf("%v", port)
 	//path := rpc.DefaultRPCPath + "localhost" + port_str
@@ -181,7 +181,7 @@ func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 	// TODO: Implement
 	addr := fmt.Sprintf("%v:%v", (*contact).Host, (*contact).Port)
 	port_str := strconv.Itoa(int((*contact).Port))
-	path := rpc.DefaultRPCPath + "localhost" + port_str
+	path := rpc.DefaultRPCPath + port_str
 	client, err := rpc.DialHTTPPath(
 		"tcp",
 		addr,
