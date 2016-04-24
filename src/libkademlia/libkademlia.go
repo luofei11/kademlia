@@ -176,8 +176,8 @@ func (k *Kademlia) Update(c Contact) {
 
 func (k *Kademlia) HandleUpdate() {
 	for {
-		c <- k.updateChan
-		bucketIndex := k.FindBucket(c.nodeID)
+		c := <- k.updateChan
+		bucketIndex := k.FindBucket(c.NodeID)
 		kb := k.table[bucketIndex]
 		contains, i := kb.FindContactInKBucket(c)
 		if contains {
