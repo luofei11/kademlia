@@ -31,7 +31,7 @@ type Kademlia struct {
 	updateFinishedChan chan bool
 	storeDataChan chan *KVPair
 	valueLookUpChan chan ID
-	valLookUpResChan chan byte[]
+	valLookUpResChan chan []byte
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
