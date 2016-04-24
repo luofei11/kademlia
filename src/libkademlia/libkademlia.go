@@ -128,7 +128,7 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
-	defer client.close()
+	defer client.Close()
   ping := PingMessage(k.SelfContact, NewRandomID())
 	var pong PongMessage
 	err = client.Call("KademliaRPC.Ping", ping, &pong)
