@@ -338,39 +338,49 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 	}
 	contacts := make([]Contact, 0, 20)
 	for _, val := range k.table[index] {
-		contacts = append(contacts, val)
+		if len(contacts) < 20 {
+			contacts = append(contacts, val)
+		} else {
+			return contacts
+		}
 	}
 
-	if len(contacts) == 20 {
+	if len(contacts) >= 20 {
 		return contacts
 	}
 
-	// algorithm to add k elements to contacts slice and return it
-	left := index
-	right := index
-	for {
-		if left == 0 && right == 159 {
+	//If the target kbucket has less than k contact, search higher bucket first, then lower bucket
+	higher := index
+	lower := index
+	for  {
+		if len(contacts) >= 20 {
 			return contacts
 		}
-		if left != 0 {
-			left -= 1
-		}
-		if right != 159 {
-			right += 1
-		}
-
-		for _, val := range k.table[right] {
-			if val.Host != nil {
-				contacts = append(contacts, val)
+		if higher < 159 {
+			higher++
+			for _, val := range k.table[higher] {
+				if len(contacts) < 20 {
+					contacts = append(contacts, val)
+				} else {
+					return contacts
+				}
 			}
 		}
-
-		for _, val := range k.table[left] {
-			if val.Host != nil {
-				contacts = append(contacts, val)
+		if lower > 0 {
+			lower--
+			for _, val := range k.table[lower] {
+				if len(contacts) < 20 {
+					contacts = append(contacts, val)
+				} else {
+					return contacts
+				}
 			}
+		}
+		if higher == 159 && lower == 0 {
+			return contacts
 		}
 	}
+	return contacts
 }
 
 // For project 2!
