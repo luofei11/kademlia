@@ -54,7 +54,6 @@ func TestIDFromString(t *testing.T){
     }
     return
 }
-
 func TestCompare(t *testing.T){
   var id_instance1 ID
   var id_instance2 ID
