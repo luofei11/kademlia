@@ -17,21 +17,34 @@ const (
 	b     = 8 * IDBytes
 	k     = 20
 )
+// Key value pair of data
 type KVPair struct {
 	  key ID
 		value []byte
 }
+
 // Kademlia type. You can put whatever state you need in this.
 type Kademlia struct {
 	NodeID      ID
 	SelfContact Contact
 	table       RoutingTable
 	data        map[ID][]byte
+	channel     KademliaChannel
+}
+// KademliaChannel type used for communications
+type KademliaChannel struct{
 	updateChan chan Contact
 	updateFinishedChan chan bool
 	storeDataChan chan *KVPair
 	valueLookUpChan chan ID
 	valLookUpResChan chan []byte
+}
+func (kc *KademliaChannel) Initialize(){
+	kc.updateChan = make(chan Contact)
+	kc.updateFinishedChan = make(chan bool)
+	kc.storeDataChan = make(chan *KVPair)
+	kc.valueLookUpChan = make(chan ID)
+	kc.valLookUpResChan = make(chan []byte)
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -41,11 +54,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	// TODO: Initialize other state here as you add functionality.
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
-	k.updateChan = make(chan Contact)
-	k.updateFinishedChan = make(chan bool)
-	k.storeDataChan = make(chan *KVPair)
-	k.valueLookUpChan = make(chan ID)
-	k.valLookUpResChan = make(chan []byte)
+	k.channel.Initialize()
 	go k.HandleUpdate()
 	go k.HandleDataStore()
 	go k.HandleValueLookUp()
@@ -87,7 +96,9 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 func NewKademlia(laddr string) *Kademlia {
 	return NewKademliaWithId(laddr, NewRandomID())
 }
-
+//////////////////////////////////
+//Error types
+//////////////////////////////////
 type ContactNotFoundError struct {
 	id  ID
 	msg string
@@ -95,13 +106,19 @@ type ContactNotFoundError struct {
 type ValueNotFoundError struct{
 	key ID
 }
-
+type CommandFailed struct {
+	msg string
+}
 func (e *ContactNotFoundError) Error() string {
 	return fmt.Sprintf("%x %s", e.id, e.msg)
 }
 func (e *ValueNotFoundError) Error() string {
 	return fmt.Sprintf("Value not found for key: %x", e.key)
 }
+func (e *CommandFailed) Error() string {
+	return fmt.Sprintf("%s", e.msg)
+}
+
 
 func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
@@ -122,22 +139,10 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	}
 	return nil, &ContactNotFoundError{nodeId, "Not found"}
 }
-func (k *Kademlia) FindBucket(nodeId ID) int{
-	//find the bucket the node falls into, return the index
-  if k.NodeID.Equals(nodeId){
-		  return -1
-	}
-	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
-}
 
-type CommandFailed struct {
-	msg string
-}
-
-func (e *CommandFailed) Error() string {
-	return fmt.Sprintf("%s", e.msg)
-}
-
+//////////////////////////////////////////////////////
+//Doing corresponding RPC calls
+//////////////////////////////////////////////////////
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
   addr := fmt.Sprintf("%v:%v", host, port)
@@ -159,9 +164,6 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	k.Update(pong.Sender)
 	return &pong.Sender, nil
 
-}
-func (k * Kademlia) StoreData(pair *KVPair){
-	  k.storeDataChan <- pair
 }
 func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 	// TODO: Implement
@@ -242,8 +244,8 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	if res.Value != nil {
 		return res.Value, res.Nodes, nil
 	} else if res.Nodes != nil {
-		for _, each := range res.Nodes {
-			k.Update(each)
+		for _, node := range res.Nodes {
+			k.Update(node)
 		}
 	} else {
 		return nil, nil, &CommandFailed{"Value Not Found"}
@@ -251,55 +253,58 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	return nil, nil, &CommandFailed{"Value Not Found"}
 }
 
-func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
-	// TODO: Implement
-	if val, ok := k.data[searchKey]; ok{
-		return val, nil
-	} else{
-		return nil, &ValueNotFoundError{searchKey}
-	}
-}
 
+///////////////////////////////////////////
+//Interfaces of kademlia
+///////////////////////////////////////////
+func (k * Kademlia) StoreData(pair *KVPair){
+	  k.channel.storeDataChan <- pair
+}
 func (k *Kademlia) Update(c Contact) {
   //Update KBucket in Routing Table by Contact c
-  k.updateChan <- c
-	_ = <- k.updateFinishedChan
+  k.channel.updateChan <- c
+	_ = <- k.channel.updateFinishedChan
 }
 func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
 	//TODO: add lookup request to channel
-	k.valueLookUpChan <- key
-	valLookUpResult := <- k.valLookUpResChan
+	k.channel.valueLookUpChan <- key
+	valLookUpResult := <- k.channel.valLookUpResChan
 	if valLookUpResult != nil{
 		  return valLookUpResult, nil
 	}else{
 		  return nil, &ValueNotFoundError{key}
 	}
 }
+
+
+///////////////////////////////////////////
+//Channel handlers of kademlia
+///////////////////////////////////////////
 func (k *Kademlia) HandleDataStore(){
 	  for {
-        kvpair := <- k.storeDataChan
+        kvpair := <- k.channel.storeDataChan
 			  k.data[kvpair.key] = kvpair.value
 		}
 }
 func (k *Kademlia) HandleValueLookUp(){
 	  for {
-			  key := <- k.valueLookUpChan
+			  key := <- k.channel.valueLookUpChan
 				val, err := k.LocalFindValue(key)
 				if err != nil{
-					  k.valLookUpResChan <- nil
+					  k.channel.valLookUpResChan <- nil
 				}else{
-					  k.valLookUpResChan <- val
+					  k.channel.valLookUpResChan <- val
 				}
 		}
 }
 func (k *Kademlia) HandleUpdate() {
 	for {
-		c := <- k.updateChan
+		c := <- k.channel.updateChan
 		//fmt.Println("New Contact to Update:",c)
 		//fmt.Println("Original Kademlia:", k)
 		bucketIndex := k.FindBucket(c.NodeID)
 		if bucketIndex == -1 {
-			k.updateFinishedChan <- true
+			k.channel.updateFinishedChan <- true
 			continue
 		}
 		kb := &k.table[bucketIndex]
@@ -324,10 +329,21 @@ func (k *Kademlia) HandleUpdate() {
 		}
 		//fmt.Println("Updated kbucket:", kb)
 		//fmt.Println("Updated Kademlia:", k)
-		k.updateFinishedChan <- true
+		k.channel.updateFinishedChan <- true
 	}
 }
 
+///////////////////////////////////////////////
+//Helper functions
+///////////////////////////////////////////////
+func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
+	// TODO: Implement
+	if val, ok := k.data[searchKey]; ok{
+		return val, nil
+	} else{
+		return nil, &ValueNotFoundError{searchKey}
+	}
+}
 func (k *Kademlia) FindClosest(key ID) []Contact {
 	prefixLen := k.NodeID.Xor(key).PrefixLen()
 	var index int
@@ -382,6 +398,14 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 	}
 	return contacts
 }
+func (k *Kademlia) FindBucket(nodeId ID) int{
+	//find the bucket the node falls into, return the index
+  if k.NodeID.Equals(nodeId){
+		  return -1
+	}
+	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
+}
+
 
 // For project 2!
 func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
