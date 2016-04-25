@@ -1,5 +1,10 @@
 # kademlia
-## demo implementation of kademlia DHT protocol written in GoLang
+![Kad](https://avatars1.githubusercontent.com/u/16706596?v=3&s=200)
+===================================================================
+
+Demo implementation of the
+[Kademlia](http://www.scs.stanford.edu/~dm/home/papers/kpos.pdf) distributed
+hash table written in [GoLang](https://golang.org/).
 
 
 ### BUILDING
