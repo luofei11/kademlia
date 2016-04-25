@@ -26,19 +26,18 @@ and then connect as a client to itself (the second argument).
 
 
 * whoami
-⋅⋅⋅Print your node ID.
+  - Print your node ID.
 
 * local_find_value key
-⋅⋅⋅If your node has data for the given key, print it.
-⋅⋅⋅If your node does not have data for the given key, you should print "ERR".
+  - If your node has data for the given key, print it.
+  - If your node does not have data for the given key, you should print "ERR".
 
 * get_contact ID
-⋅⋅⋅If your buckets contain a node with the given ID,
-        `printf("%v %v\n", theNode.addr, theNode.port)``
-⋅⋅⋅If your buckers do not contain any such node, print "ERR".
+  - If your buckets contain a node with the given ID,
+        `printf("%v %v\n", theNode.addr, theNode.port)`
+  - If your buckers do not contain any such node, print "ERR".
 
-// The following four commands cause your code to invoke the appropriate RPC on
-// another node, specified by the nodeID argument.
+// The following four commands cause your code to invoke the appropriate RPC on another node, specified by the nodeID argument.
 * ping nodeID
 * ping host:port
   - Perform a ping.
