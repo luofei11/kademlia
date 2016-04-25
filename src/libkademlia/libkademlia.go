@@ -44,6 +44,8 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.updateChan = make(chan Contact)
 	k.updateFinishedChan = make(chan bool)
 	k.storeDataChan = make(chan *KVPair)
+	k.valueLookUpChan = make(chan ID)
+	k.valLookUpResChan = make(chan []byte)
 	go k.HandleUpdate()
 	go k.HandleDataStore()
 	go k.HandleValueLookUp()
@@ -261,7 +263,7 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	defer client.Close()
 	req := FindValueRequest{k.SelfContact, NewRandomID(), searchKey}
 	var res FindValueResult
-
+  fmt.Println("doing find value before RPC")
 	err = client.Call("KademliaRPC.FindValue", req, &res)
 	if err != nil {
 		client.Close()
