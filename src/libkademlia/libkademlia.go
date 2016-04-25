@@ -311,9 +311,8 @@ func (k *Kademlia) HandleUpdate() {
 		if contains {
 			kb.MoveToTail(i)
 		} else {
-				if len(*kb) < cap(*kb) {
-					//fmt.Println("not filled")
-					kb.AddToTail(c)
+			if len(*kb) < cap(*kb) {
+				kb.AddToTail(c)
 				} else {
 					//fmt.Println("filled")
 					head := (*kb)[0]
@@ -321,15 +320,15 @@ func (k *Kademlia) HandleUpdate() {
 					if err != nil {
 						kb.Remove(0)
 						kb.AddToTail(c)
-					} else {
-						kb.MoveToTail(0)
+						} else {
+							kb.MoveToTail(0)
+						}
 					}
 				}
-		}
-		//fmt.Println("Updated kbucket:", kb)
-		//fmt.Println("Updated Kademlia:", k)
-		k.channel.updateFinishedChan <- true
-	}
+				//fmt.Println("Updated kbucket:", kb)
+				//fmt.Println("Updated Kademlia:", k)
+				k.channel.updateFinishedChan <- true
+			}
 }
 
 ///////////////////////////////////////////////
