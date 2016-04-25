@@ -70,5 +70,5 @@ func TestCompare(t *testing.T){
   if id_instance3.Compare(id_instance4) == 0{
       t.Error("ID From String wrong!")
   }
-  return 
+  return
 }
