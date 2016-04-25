@@ -6,7 +6,6 @@ package libkademlia
 
 import (
 	"net"
-	"fmt"
 )
 
 type KademliaRPC struct {
@@ -116,9 +115,7 @@ type FindValueResult struct {
 func (k *KademliaRPC) FindValue(req FindValueRequest, res *FindValueResult) error {
 	// TODO: Implement.
 	go k.kademlia.Update(req.Sender)
-	fmt.Println("doing find value before LookUpValue")
 	value, err := k.kademlia.LookUpValue(req.Key)
-	fmt.Println("doing find value after LookUpValue")
 	if err != nil{
      //TODO: didn't find value
 		 res.MsgID = CopyID(req.MsgID)
