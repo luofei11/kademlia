@@ -19,8 +19,8 @@ const (
 )
 // Key value pair of data
 type KVPair struct {
-	  key ID
-		value []byte
+	key ID
+	value []byte
 }
 
 // Kademlia type. You can put whatever state you need in this.
@@ -145,16 +145,16 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 //////////////////////////////////////////////////////
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
-  addr := fmt.Sprintf("%v:%v", host, port)
+	addr := fmt.Sprintf("%v:%v", host, port)
 	port_str := fmt.Sprintf("%v", port)
 	path := rpc.DefaultRPCPath + port_str
-  client, err := rpc.DialHTTPPath("tcp", addr, path)
+	client, err := rpc.DialHTTPPath("tcp", addr, path)
 	if err != nil{
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
 	defer client.Close()
-  ping := PingMessage{k.SelfContact, NewRandomID()}
+	ping := PingMessage{k.SelfContact, NewRandomID()}
 	var pong PongMessage
 	err = client.Call("KademliaRPC.Ping", ping, &pong)
 	if err != nil{
@@ -235,7 +235,6 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	defer client.Close()
 	req := FindValueRequest{k.SelfContact, NewRandomID(), searchKey}
 	var res FindValueResult
-  fmt.Println("doing find value before RPC")
 	err = client.Call("KademliaRPC.FindValue", req, &res)
 	if err != nil {
 		client.Close()
@@ -258,11 +257,11 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 //Interfaces of kademlia
 ///////////////////////////////////////////
 func (k * Kademlia) StoreData(pair *KVPair){
-	  k.channel.storeDataChan <- pair
+	k.channel.storeDataChan <- pair
 }
 func (k *Kademlia) Update(c Contact) {
   //Update KBucket in Routing Table by Contact c
-  k.channel.updateChan <- c
+	k.channel.updateChan <- c
 	_ = <- k.channel.updateFinishedChan
 }
 func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
@@ -282,20 +281,20 @@ func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
 ///////////////////////////////////////////
 func (k *Kademlia) HandleDataStore(){
 	  for {
-        kvpair := <- k.channel.storeDataChan
-			  k.data[kvpair.key] = kvpair.value
+			kvpair := <- k.channel.storeDataChan
+			k.data[kvpair.key] = kvpair.value
 		}
 }
 func (k *Kademlia) HandleValueLookUp(){
 	  for {
-			  key := <- k.channel.valueLookUpChan
-				val, err := k.LocalFindValue(key)
-				if err != nil{
-					  k.channel.valLookUpResChan <- nil
+			key := <- k.channel.valueLookUpChan
+			val, err := k.LocalFindValue(key)
+			if err != nil{
+				k.channel.valLookUpResChan <- nil
 				}else{
-					  k.channel.valLookUpResChan <- val
+					k.channel.valLookUpResChan <- val
 				}
-		}
+			}
 }
 func (k *Kademlia) HandleUpdate() {
 	for {
@@ -400,8 +399,8 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 }
 func (k *Kademlia) FindBucket(nodeId ID) int{
 	//find the bucket the node falls into, return the index
-  if k.NodeID.Equals(nodeId){
-		  return -1
+	if k.NodeID.Equals(nodeId){
+		return -1
 	}
 	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
 }
