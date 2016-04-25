@@ -37,7 +37,8 @@ and then connect as a client to itself (the second argument).
         `printf("%v %v\n", theNode.addr, theNode.port)`
   - If your buckers do not contain any such node, print "ERR".
 
-// The following four commands cause your code to invoke the appropriate RPC on another node, specified by the nodeID argument.
+> The following four commands cause your code to invoke the appropriate RPC on another node, specified by the nodeID argument.
+
 * ping nodeID
 * ping host:port
   - Perform a ping.
@@ -51,7 +52,8 @@ and then connect as a client to itself (the second argument).
 * find_value nodeID key
   - Perform a find_value. If it returns nodes, print them as for find_node. If it returns a value, print the value as in iterativeFindValue.
 
-// The following commands are the iterative RPCs. These are for project 2.
+> The following commands are the iterative RPCs. These are for project 2.
+
 * iterativeStore key value
   - Perform the iterativeStore operation and then print the ID of the node that
     received the final STORE operation.
