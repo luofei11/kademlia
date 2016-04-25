@@ -280,21 +280,21 @@ func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
 //Channel handlers of kademlia
 ///////////////////////////////////////////
 func (k *Kademlia) HandleDataStore(){
-	  for {
-			kvpair := <- k.channel.storeDataChan
-			k.data[kvpair.key] = kvpair.value
-		}
+	for {
+		kvpair := <- k.channel.storeDataChan
+		k.data[kvpair.key] = kvpair.value
+	}
 }
 func (k *Kademlia) HandleValueLookUp(){
-	  for {
-			key := <- k.channel.valueLookUpChan
-			val, err := k.LocalFindValue(key)
-			if err != nil{
-				k.channel.valLookUpResChan <- nil
-				}else{
-					k.channel.valLookUpResChan <- val
-				}
+	for {
+		key := <- k.channel.valueLookUpChan
+		val, err := k.LocalFindValue(key)
+		if err != nil{
+			k.channel.valLookUpResChan <- nil
+			}else{
+				k.channel.valLookUpResChan <- val
 			}
+		}
 }
 func (k *Kademlia) HandleUpdate() {
 	for {
