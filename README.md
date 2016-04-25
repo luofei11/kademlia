@@ -5,9 +5,9 @@
 ### BUILDING
 
 
-Go's build tools depend on the value of the GOPATH environment variable. $GOPATH
-should be the project root: the absolute path of the directory containing
-{bin,pkg,src}.
+> Go's build tools depend on the value of the GOPATH environment variable. $GOPATH
+> should be the project root: the absolute path of the directory containing
+> {bin,pkg,src}.
 
 Once you've set that, you should be able to build the skeleton and create an
 executable at bin/kademlia with:
