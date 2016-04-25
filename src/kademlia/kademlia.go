@@ -50,7 +50,7 @@ func main() {
 	// Confirm our server is up with a PING request and then exit.
 	// Your code should loop forever, reading instructions from stdin and
 	// printing their results to stdout. See README.txt for more details.
-	hostname, port, err := net.SplitHostPort(firstPeerStr)
+	_, port, err := net.SplitHostPort(firstPeerStr)
 	client, err := rpc.DialHTTPPath("tcp", firstPeerStr,
 		rpc.DefaultRPCPath+port)
 	if err != nil {
