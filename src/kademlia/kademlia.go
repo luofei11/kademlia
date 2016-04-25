@@ -22,7 +22,7 @@ func main() {
 	// TODO: PUT YOUR GROUP'S NET IDS HERE!
 	// Example:
 	// netIds := "abc123 def456 ghi789"
-	netIds := "fla414"
+	netIds := "fla414 ywx108"
 	if len(netIds) == 0 {
 		log.Fatal("Variable containing group's net IDs is not set!\n")
 	}
@@ -51,8 +51,6 @@ func main() {
 	// Your code should loop forever, reading instructions from stdin and
 	// printing their results to stdout. See README.txt for more details.
 	hostname, port, err := net.SplitHostPort(firstPeerStr)
-	fmt.Println("hostname: %s", hostname)
-	fmt.Println(rpc.DefaultRPCPath+hostname+port)
 	client, err := rpc.DialHTTPPath("tcp", firstPeerStr,
 		rpc.DefaultRPCPath+port)
 	if err != nil {
@@ -72,8 +70,6 @@ func main() {
 	}
 	log.Printf("ping msgID: %s\n", ping.MsgID.AsString())
 	log.Printf("pong msgID: %s\n\n", pong.MsgID.AsString())
-	p := strconv.Itoa(int(pong.Sender.Port))
-	log.Printf("pong Sender: %s\n", p)
 
 	in := bufio.NewReader(os.Stdin)
 	quit := false
@@ -169,8 +165,6 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 					break
 				}
 			}
-			fmt.Println(host, port)
-			fmt.Println("enter host port mode")
 			contact, err = k.DoPing(host, uint16(port))
 			if err != nil {
 				response = fmt.Sprintf("ERR: %s", err)
@@ -180,7 +174,6 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 				return
 			}
 		} else {
-			fmt.Println("enter id mode")
 			c, err := k.FindContact(id)
 			if err != nil {
 				response = "ERR: Not a valid Node ID or host:port address"
@@ -228,7 +221,6 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 			response = "ERR: Unable to find contact with node ID (" + toks[1] + ")"
 			return
 		}
-		fmt.Println("Found Contact!")
 		key, err := libkademlia.IDFromString(toks[2])
 		if err != nil {
 			response = "ERR: Provided an invalid key (" + toks[2] + ")"
@@ -237,7 +229,6 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 		value := []byte(toks[3])
 
 		err = k.DoStore(contact, key, value)
-		fmt.Println("store reaches here!")
 		if err != nil {
 			response = fmt.Sprintf("ERR: %s", err)
 		} else {

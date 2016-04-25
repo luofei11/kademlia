@@ -107,7 +107,6 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
 	// Self is target
 	if nodeId == k.SelfContact.NodeID {
-		//log.Printf("I found myself!wtf!")
 		return &k.SelfContact, nil
 	}
 	// Find contact with provided ID
@@ -115,7 +114,6 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	if bucketIndex == -1 {
 		return nil, &ContactNotFoundError{nodeId, "Not found"}
 	}
-	//log.Printf("I found index!:", bucketIndex)
 	kbucket := k.table[bucketIndex]
 	for _, contact := range kbucket {
 		  if contact.NodeID.Equals(nodeId){
@@ -143,44 +141,24 @@ func (e *CommandFailed) Error() string {
 func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	// TODO: Implement
   addr := fmt.Sprintf("%v:%v", host, port)
-	//addr := host.String() + ":" + strconv.Itoa(int(port))
-	//hostname,port_str,err := net.SplitHostPort(addr)
 	port_str := fmt.Sprintf("%v", port)
 	path := rpc.DefaultRPCPath + port_str
-  //addr := fmt.Sprintf("%v:%v", host, port)
-	//port_str := fmt.Sprintf("%v", port)
-	//path := rpc.DefaultRPCPath + "localhost" + port_str
-	fmt.Println(addr)
-	//fmt.Println(path)
-	/*
-	for _,kbucket := range k.table{
-		  for _, contact := range kbucket{
-				  fmt.Println(contact.NodeID)
-			}
-	}
-	*/
   client, err := rpc.DialHTTPPath("tcp", addr, path)
-	//client, err := rpc.DialHTTP("tcp", addr)
 	if err != nil{
-		  //fmt.Println("Im here")
 		  return nil, &CommandFailed{
 				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
-	//fmt.Println("passed 1")
 	defer client.Close()
   ping := PingMessage{k.SelfContact, NewRandomID()}
-	//fmt.Println("ping", ping)
 	var pong PongMessage
-	//fmt.Println("pong", pong)
 	err = client.Call("KademliaRPC.Ping", ping, &pong)
 	if err != nil{
 		  return nil, err
 	}
-	//fmt.Println("pong", pong)
+
 	k.Update(pong.Sender)
 	return &pong.Sender, nil
-	//return nil, &CommandFailed{
-		//"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
+
 }
 func (k * Kademlia) StoreData(pair *KVPair){
 	  k.storeDataChan <- pair
@@ -196,24 +174,20 @@ func (k *Kademlia) DoStore(contact *Contact, key ID, value []byte) error {
 		path,
 	)
 	if err != nil {
-		//fmt.Println("ERR: " + err.Error())
 		return err
 	}
-	//fmt.Println("dostore reaches here step1 !")
 	defer client.Close()
 
 	req := StoreRequest{k.SelfContact, NewRandomID(), key, value}
 	var res StoreResult
-  //fmt.Println("dostore reaches here step2 !")
+
 	err = client.Call("KademliaRPC.Store", req, &res)
 	//fmt.Println("dostore reaches here step6 !")
 	if err != nil {
 		client.Close()
-		//fmt.Println("ERR: " + err.Error())
 		return err
 	}
 	return nil
-	//return &CommandFailed{"Not implemented"}
 }
 
 func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error) {
@@ -226,7 +200,6 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 		rpc.DefaultRPCPath+port_str,
 	)
 	if err != nil {
-		//fmt.Println("ERR: " + err.Error())
 		return  nil, err
 	}
 	defer client.Close()
@@ -235,13 +208,11 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 	err = client.Call("KademliaRPC.FindNode", req, &res)
 	if err != nil {
 		client.Close()
-		//fmt.Println("ERR: " + err.Error())
 		return nil ,err
 	}
 	for _, each := range res.Nodes {
 		k.Update(each)
 	}
-	//return fmt.Sprintf("OK: Found %d Nodes", len(res.Nodes))
 	return res.Nodes, nil
 }
 
@@ -257,7 +228,6 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 		path,
 	)
 	if err != nil {
-		//fmt.Println("ERR: " + err.Error())
 		return nil, nil, err
 	}
 	defer client.Close()
@@ -267,7 +237,6 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	err = client.Call("KademliaRPC.FindValue", req, &res)
 	if err != nil {
 		client.Close()
-		//fmt.Println("ERR: " + err.Error())
 		return nil, nil, err
 	}
 	if res.Value != nil {
@@ -279,7 +248,7 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	} else {
 		return nil, nil, &CommandFailed{"Value Not Found"}
 	}
-	return nil, nil, &CommandFailed{"Not implemented"}
+	return nil, nil, &CommandFailed{"Value Not Found"}
 }
 
 func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
@@ -287,7 +256,7 @@ func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	if val, ok := k.data[searchKey]; ok{
 		return val, nil
 	} else{
-		return []byte(""), &ValueNotFoundError{searchKey}
+		return nil, &ValueNotFoundError{searchKey}
 	}
 }
 
@@ -333,15 +302,11 @@ func (k *Kademlia) HandleUpdate() {
 			k.updateFinishedChan <- true
 			continue
 		}
-		//fmt.Println("bucketIndex:", bucketIndex)
 		kb := &k.table[bucketIndex]
-		//fmt.Println("Original kbucket:", kb)
 		contains, i := kb.FindContactInKBucket(c)
 		if contains {
-			//fmt.Println("contains")
 			kb.MoveToTail(i)
 		} else {
-				//fmt.Println("not contains")
 				if len(*kb) < cap(*kb) {
 					//fmt.Println("not filled")
 					kb.AddToTail(c)
