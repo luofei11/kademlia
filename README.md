@@ -41,27 +41,25 @@ and then connect as a client to itself (the second argument).
 // another node, specified by the nodeID argument.
 * ping nodeID
 * ping host:port
-⋅⋅⋅Perform a ping.
+  - Perform a ping.
 
 * store nodeID key value
-⋅⋅⋅Perform a store and print a blank line.
+  - Perform a store and print a blank line.
 
 * find_node nodeID key
-⋅⋅⋅Perform a find_node and print its results as for iterativeFindNode.
+  - Perform a find_node and print its results as for iterativeFindNode.
 
 * find_value nodeID key
-⋅⋅⋅Perform a find_value. If it returns nodes, print them as for find_node. If
-⋅⋅⋅it returns a value, print the value as in iterativeFindValue.
+  - Perform a find_value. If it returns nodes, print them as for find_node. If it returns a value, print the value as in iterativeFindValue.
 
 // The following commands are the iterative RPCs. These are for project 2.
 * iterativeStore key value
-⋅⋅⋅Perform the iterativeStore operation and then print the ID of the node that
+  - Perform the iterativeStore operation and then print the ID of the node that
     received the final STORE operation.
 
 * iterativeFindNode ID
-⋅⋅⋅Print a list of ≤ k closest nodes and print their IDs. You should collect
+  - Print a list of ≤ k closest nodes and print their IDs. You should collect
     the IDs in a slice and print that.
 
 * iterativeFindValue key
-⋅⋅⋅`printf("%v %v\n", ID, value)`, where ID refers to the node that finally
-⋅⋅⋅returned the value. If you do not find a value, print "ERR".
+  - `printf("%v %v\n", ID, value)`, where ID refers to the node that finally returned the value. If you do not find a value, print "ERR".
