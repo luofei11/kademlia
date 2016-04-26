@@ -13,7 +13,7 @@ func TestRemove(t *testing.T) {
 	k := NewKademlia("localhost:8080")
 	//selfID := k.SelfContact.NodeID
 	remoteID := NewRandomID()
-	c := Contact{remoteID, net.IPv4(127,0,0,1), 8888}
+	c := Contact{remoteID, net.IPv4(127, 0, 0, 1), 8888}
 	k.Update(c)
 	if remoteContact, err := k.FindContact(remoteID); err == nil {
 		if !remoteContact.NodeID.Equals(remoteID) {
@@ -39,7 +39,7 @@ func TestRemove(t *testing.T) {
 func TestMoveToTail(t *testing.T) {
 	k := NewKademlia("localhost:5000")
 	remoteID := NewRandomID()
-	c := Contact{remoteID, net.IPv4(127,0,0,1), 5050}
+	c := Contact{remoteID, net.IPv4(127, 0, 0, 1), 5050}
 	k.Update(c)
 	if remoteContact, err := k.FindContact(remoteID); err == nil {
 		if !remoteContact.NodeID.Equals(remoteID) {
@@ -62,7 +62,7 @@ func TestMoveToTail(t *testing.T) {
 	if !contains_2 {
 		t.Error("Can't find remote's contact in self's contact list.")
 	} else {
-		if length-1 != tail1 {
+		if length - 1 != tail1 {
 			t.Error("Can't move to tail.")
 		} 
 	}
@@ -71,7 +71,7 @@ func TestMoveToTail(t *testing.T) {
 func TestAddToTail(t *testing.T) {
 	k := NewKademlia("localhost:4000")
 	remoteID := NewRandomID()
-	c := Contact{remoteID, net.IPv4(127,0,0,1), 4004}
+	c := Contact{remoteID, net.IPv4(127, 0, 0, 1), 4004}
 	k.Update(c)
 	if remoteContact, err := k.FindContact(remoteID); err == nil {
 		if !remoteContact.NodeID.Equals(remoteID) {
@@ -95,7 +95,7 @@ func TestAddToTail(t *testing.T) {
 	if !contains_3 {
 		t.Error("Can't find remote's contact in self's contact list.")
 	} else {
-		if length-1 != tail2 {
+		if length - 1 != tail2 {
 			t.Error("Can't add to tail.")
 		} 
 	}
