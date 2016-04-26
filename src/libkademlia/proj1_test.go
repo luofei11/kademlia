@@ -198,11 +198,11 @@ func TestFindValue(t *testing.T) {
 	}
 
 	//Given the wrong keyID, it should return k nodes.
-	// wrongKey := NewRandomID()
-	// foundValue, contacts, err = instance1.DoFindValue(contact2, wrongKey)
-	// if contacts == nil || len(contacts) < 10 {
-	// 	t.Error("Searching for a wrong ID did not return contacts")
-	// }
+	wrongKey := NewRandomID()
+	foundValue, contacts, err = instance1.DoFindValue(contact2, wrongKey)
+	if contacts == nil || len(contacts) < 10 {
+		t.Error("Searching for a wrong ID did not return contacts")
+	}
 
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
