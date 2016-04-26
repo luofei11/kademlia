@@ -1,0 +1,30 @@
+*********ID Test**************
+- TestXor()
+  Test the Xor function of ID
+- TestCopy()
+  Test the CopyID function
+- TestIDFromString()
+  Test to see if ID can be extracted from a string correctly
+- TestCompare()
+  Test the compare function of ID
+*********ID Test**************
+
+*********KBucket Test**************
+- TestRemove()
+  Test removing an entry from the KBucket
+- TestMoveToTail()
+  Test moving an entry to the tail of KBucket
+- TestAddToTail()
+  Test appending an entry to the KBucket
+*********KBucket Test**************
+
+
+*********Project Test**************
+- TestFindNode()
+  Add test case:
+  1. Test that the correct contacts were stored after issuing FindNode.
+  2. Test no other contacts were stored after FindNode.
+- TestFindValue()
+  1. Test that the correct contacts were stored after issuing FindValue.
+  2. Test no other contacts were stored after FindValue.
+*********Project Test**************

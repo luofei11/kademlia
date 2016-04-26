@@ -225,5 +225,5 @@ func TestFindValue(t *testing.T) {
 			t.Error("Some other contacts were stored!")
 		}
 	}
-	return 
+	return
 }
