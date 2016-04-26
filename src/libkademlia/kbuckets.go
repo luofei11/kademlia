@@ -12,6 +12,39 @@ func (table *RoutingTable) Initialize() {
   }
 }
 
+func (table *RoutingTable) GetContacts() []Contact{
+  var res []Contact
+  for _, kb := range table{
+    for _, c := range kb{
+      res = append(res,c)
+    }
+  }
+  return res
+}
+
+func (table *RoutingTable) ExcludeContacts(other RoutingTable) []Contact{
+  var res []Contact
+  for _, kb := range table{
+    for _, c := range kb{
+      if !other.Contains(c){
+        res = append(res,c)
+      }
+    }
+  }
+  return res
+}
+
+func (table *RoutingTable) Contains(c Contact) bool{
+  for _,kb := range table{
+    for _,contact := range kb{
+      if contact.NodeID.Equals(c.NodeID){
+        return true
+      }
+    }
+  }
+  return false
+}
+
 func (kb *KBucket) FindContactInKBucket (c Contact) (bool, int) {
   for i := 0; i < len(*kb); i++ {
     temp := (*kb)[i]
