@@ -131,7 +131,12 @@ func TestFindNode(t *testing.T) {
 	}
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
-
+  for _, contact := range contacts{
+		_, err := instance1.FindContact(contact.NodeID)
+		if err != nil{
+			t.Error("Contact was not stored!")
+		}
+	}
 	return
 }
 
