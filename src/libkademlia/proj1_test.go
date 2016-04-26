@@ -121,6 +121,8 @@ func TestFindNode(t *testing.T) {
 		instance2.DoPing(host_number, port_number)
 	}
 	key := NewRandomID()
+	//contacts_before_findnode := instance1.table.GetContacts()
+	table_before_findnode := instance1.table
 	contacts, err := instance1.DoFindNode(contact2, key)
 	if err != nil {
 		t.Error("Error doing FindNode")
@@ -135,6 +137,20 @@ func TestFindNode(t *testing.T) {
 		_, err := instance1.FindContact(contact.NodeID)
 		if err != nil{
 			t.Error("Contact was not stored!")
+		}
+	}
+  //contacts_after_findnode := instance1.table.GetContacts()
+	newly_stored_contacts := instance1.table.ExcludeContacts(table_before_findnode)
+	for _, new_c := range newly_stored_contacts{
+		flag := false
+		for _, c := range contacts{
+			if new_c.NodeID.Equals(c.NodeID){
+				flag = true
+				break
+			}
+		}
+		if !flag{
+			t.Error("Some other contacts were stored!")
 		}
 	}
 	return
@@ -174,9 +190,9 @@ func TestFindValue(t *testing.T) {
 	if err != nil {
 		t.Error("Could not store value")
 	}
-
+  table_before_findvalue := instance1.table
 	// Given the right keyID, it should return the value
-	foundValue, _, err := instance1.DoFindValue(contact2, key)
+	foundValue, contacts, err := instance1.DoFindValue(contact2, key)
 	if !bytes.Equal(foundValue, value) {
 		t.Error("Stored value did not match found value")
 	}
@@ -190,4 +206,24 @@ func TestFindValue(t *testing.T) {
 
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
+	for _, contact := range contacts{
+		_, err := instance1.FindContact(contact.NodeID)
+		if err != nil{
+			t.Error("Contact was not stored!")
+		}
+	}
+	newly_stored_contacts := instance1.table.ExcludeContacts(table_before_findvalue)
+	for _, new_c := range newly_stored_contacts{
+		flag := false
+		for _, c := range contacts{
+			if new_c.NodeID.Equals(c.NodeID){
+				flag = true
+				break
+			}
+		}
+		if !flag{
+			t.Error("Some other contacts were stored!")
+		}
+	}
+	return 
 }
