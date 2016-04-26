@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 	//"time"
+	"fmt"
 )
 
 func StringToIpPort(laddr string) (ip net.IP, port uint16, err error) {
@@ -114,11 +115,14 @@ func TestFindNode(t *testing.T) {
 		return
 	}
 	tree_node := make([]*Kademlia, 10)
+	required_contacts_map := make(map[string]int)
+	required_contacts_map[fmt.Sprintf("%v", instance1.SelfContact)] = 0
 	for i := 0; i < 10; i++ {
 		address := "localhost:" + strconv.Itoa(7896+i)
 		tree_node[i] = NewKademlia(address)
 		host_number, port_number, _ := StringToIpPort(address)
 		instance2.DoPing(host_number, port_number)
+		required_contacts_map[fmt.Sprintf("%v", tree_node[i].SelfContact)] = 0
 	}
 	key := NewRandomID()
 	//contacts_before_findnode := instance1.table.GetContacts()
@@ -133,10 +137,23 @@ func TestFindNode(t *testing.T) {
 	}
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
-  	for _, contact := range contacts{
+  for _, contact := range contacts{
 		_, err := instance1.FindContact(contact.NodeID)
 		if err != nil{
 			t.Error("Contact was not stored!")
+		}
+	}
+	for _, contact := range contacts{
+		_, exist := required_contacts_map[fmt.Sprintf("%v", contact)]
+		if exist {
+			required_contacts_map[fmt.Sprintf("%v", contact)] += 1
+		} else {
+			t.Error("A wrong contact was returned!")
+		}
+	}
+	for _, value := range required_contacts_map {
+		if value != 1 {
+			t.Error("Return Contacts Wrong!")
 		}
 	}
   //contacts_after_findnode := instance1.table.GetContacts()
@@ -175,13 +192,15 @@ func TestFindValue(t *testing.T) {
 		t.Error("Instance 2's contact not found in Instance 1's contact list")
 		return
 	}
-
+	required_contacts_map := make(map[string]int)
+	required_contacts_map[fmt.Sprintf("%v", instance1.SelfContact)] = 0
 	tree_node := make([]*Kademlia, 10)
 	for i := 0; i < 10; i++ {
 		address := "localhost:" + strconv.Itoa(7928+i)
 		tree_node[i] = NewKademlia(address)
 		host_number, port_number, _ := StringToIpPort(address)
 		instance2.DoPing(host_number, port_number)
+		required_contacts_map[fmt.Sprintf("%v", tree_node[i].SelfContact)] = 0
 	}
 
 	key := NewRandomID()
@@ -210,6 +229,19 @@ func TestFindValue(t *testing.T) {
 		_, err := instance1.FindContact(contact.NodeID)
 		if err != nil{
 			t.Error("Contact was not stored!")
+		}
+	}
+	for _, contact := range contacts{
+		_, exist := required_contacts_map[fmt.Sprintf("%v", contact)]
+		if exist {
+			required_contacts_map[fmt.Sprintf("%v", contact)] += 1
+		} else {
+			t.Error("A wrong contact was returned!")
+		}
+	}
+	for _, value := range required_contacts_map {
+		if value != 1 {
+			t.Error("Return Contacts Wrong!")
 		}
 	}
 	newly_stored_contacts := instance1.table.ExcludeContacts(table_before_findvalue)
