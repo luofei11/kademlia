@@ -246,6 +246,7 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 		for _, node := range res.Nodes {
 			k.Update(node)
 		}
+		return res.Value, res.Nodes, nil
 	} else {
 		return nil, nil, &CommandFailed{"Value Not Found"}
 	}
