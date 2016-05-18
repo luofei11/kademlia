@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/rpc"
 	"strconv"
+	"sort"
+	"time"
 )
 
 const (
@@ -407,11 +409,278 @@ func (k *Kademlia) FindBucket(nodeId ID) int{
 
 
 // For project 2!
-func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
-	return nil, &CommandFailed{"Not implemented"}
+type ShortListElement struct {
+	contact Contact
+	distance int
+	status int//0 default, 1 inactive, 2 active
 }
+type ShortListElements []ShortListElement
+func (slice ShortListElements) Len() int {
+	return len(slice)
+}
+func (slice ShortListElements) Less(i, j int) bool {
+	return slice[i].distance < slice[j].distance
+}
+func (slice ShortListElements) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+func NotEnoughActive(ContactedList []ShortListElement) bool {
+	count_active := 0
+	for _, val := range ContactedList {
+		if val.status == 2 {
+			count_active++
+		}
+	}
+	if count_active < 20 {
+		return true
+	} else {
+		return false
+	}
+}
+
+type IterFindNodeResult struct {
+	Receiver Contact
+	Nodes []Contact
+	Err   error
+}
+
+func (k *Kademlia) iteFindNodeHelper(server ShortListElement, id ID, iterFindNodeChan chan IterFindNodeResult) {
+	var res IterFindNodeResult
+	res.Receiver = server.contact
+	res.Nodes, res.Err = k.DoFindNode(&server.contact, id)
+	iterFindNodeChan <- res
+}
+
+func notInList(List []ShortListElement, one_shortlist_element ShortListElement) bool {
+	for _, val := range List {
+		if val.contact.NodeID.Equals(one_shortlist_element.contact.NodeID) {
+			return false
+		}
+	}
+	return true
+}
+
+func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
+	ShortList := make([]ShortListElement, 0, 60)
+	ProbingList := make([]ShortListElement, 0, 3)
+	ContactedList := make([]ShortListElement, 0, 30)
+	iterFindNodeChan := make(chan IterFindNodeResult)
+
+	initial_shortlist := k.FindClosest(id)
+	for _, val := range initial_shortlist {
+		one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+		ShortList = append(ShortList, one_shortlist_element)
+	}
+	sort.Sort(ShortListElements(ShortList))
+
+	ClosestDistancePre := 160
+	ClosestDistanceNow := 159
+	if len(ShortList) > 0 {
+		ClosestDistanceNow = ShortList[0].distance
+	}
+
+	for (ClosestDistanceNow < ClosestDistancePre && NotEnoughActive(ContactedList)){
+		ClosestDistancePre = ClosestDistanceNow
+		ProbingList = nil
+		//dump(ProbingList)
+		i := 0
+		for i < 3 && i < len(ShortList) {
+			ProbingList = append(ProbingList, ShortList[i])
+			i++
+		}
+		ShortList = append(ShortList[:0], ShortList[i:]...)
+		timeout := false
+		timeOutChan := make(chan bool)
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			timeOutChan <- true
+		}()
+
+		for _, val := range ProbingList {
+			go k.iteFindNodeHelper(val, id, iterFindNodeChan)
+		}
+		allreceive := false
+
+		for !timeout && !allreceive{
+			select {
+				case res := <- iterFindNodeChan:
+					for index, val := range ProbingList {
+						if val.contact.NodeID.Equals(res.Receiver.NodeID){
+							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+							if res.Err != nil {
+								one_shortlist_element.status = 1
+							} else {
+								one_shortlist_element.status = 2
+							}
+							ContactedList = append(ContactedList, one_shortlist_element)
+						}
+					}
+					// inContactedList := false
+					// for _, val := range ContactedList {
+					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+					// 		if res.Err != nil {
+					// 			val.status = 1
+					// 		} else {
+					// 			val.status = 2
+					// 		}
+					// 		inContactedList = true
+					// 	}
+					// }
+					// if !inContactedList {
+					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+					// 	if res.Err != nil {
+					// 		one_shortlist_element.status = 1
+					// 	} else {
+					// 		one_shortlist_element.status = 2
+					// 	}
+					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					// }
+					if res.Err == nil {
+						for _, val := range res.Nodes {
+							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
+								ShortList = append(ShortList, one_shortlist_element)
+							}
+						}
+					}
+					if len(ProbingList) == 0 {
+						allreceive = true
+					}
+				case timeout =<- timeOutChan:
+					for _, probingval := range ProbingList {
+						// inContactedList := false
+						// for _, contactedval := range ContactedList {
+						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+						// 		contactedval.status = 1
+						// 		inContactedList = true
+						// 	}
+						// }
+						// if !inContactedList {
+							probingval.status = 1
+							ContactedList = append(ContactedList, probingval)
+						// }
+					}
+			}
+		}
+		sort.Sort(ShortListElements(ShortList))
+		if len(ShortList) > 0 {
+			ClosestDistanceNow = ShortList[0].distance
+		}
+	}
+
+	for (NotEnoughActive(ContactedList) && len(ShortList) > 0){
+		ProbingList = nil
+		//dump(ProbingList)
+		i := 0
+		for i < 3 && i < len(ShortList) {
+			ProbingList = append(ProbingList, ShortList[i])
+			i++
+		}
+		ShortList = append(ShortList[:0], ShortList[i:]...)
+		timeout := false
+		timeOutChan := make(chan bool)
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			timeOutChan <- true
+		}()
+
+		for _, val := range ProbingList {
+			go k.iteFindNodeHelper(val, id, iterFindNodeChan)
+		}
+		allreceive := false
+
+		for !timeout && !allreceive{
+			select {
+				case res := <- iterFindNodeChan:
+					for index, val := range ProbingList {
+						if val.contact.NodeID.Equals(res.Receiver.NodeID){
+							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+							if res.Err != nil {
+								one_shortlist_element.status = 1
+							} else {
+								one_shortlist_element.status = 2
+							}
+							ContactedList = append(ContactedList, one_shortlist_element)
+						}
+					}
+					// inContactedList := false
+					// for _, val := range ContactedList {
+					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+					// 		if res.Err != nil {
+					// 			val.status = 1
+					// 		} else {
+					// 			val.status = 2
+					// 		}
+					// 		inContactedList = true
+					// 	}
+					// }
+					// if !inContactedList {
+					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+					// 	if res.Err != nil {
+					// 		one_shortlist_element.status = 1
+					// 	} else {
+					// 		one_shortlist_element.status = 2
+					// 	}
+					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					// }
+					if res.Err == nil {
+						for _, val := range res.Nodes {
+							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
+								ShortList = append(ShortList, one_shortlist_element)
+							}
+						}
+					}
+					if len(ProbingList) == 0 {
+						allreceive = true
+					}
+				case timeout =<- timeOutChan:
+					for _, probingval := range ProbingList {
+						// inContactedList := false
+						// for _, contactedval := range ContactedList {
+						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+						// 		contactedval.status = 1
+						// 		inContactedList = true
+						// 	}
+						// }
+						// if !inContactedList {
+							probingval.status = 1
+							ContactedList = append(ContactedList, probingval)
+						// }
+					}
+			}
+		}
+		sort.Sort(ShortListElements(ShortList))
+	}
+
+	ResultList := make([]Contact, 0, 30)
+	sort.Sort(ShortListElements(ContactedList))
+	for _, val := range ContactedList {
+		if val.status == 2 {
+			ResultList = append(ResultList, val.contact)
+		}
+	}
+	if len(ResultList) > 20 {
+		ResultList = ResultList[:20]
+	}
+	return ResultList, nil
+	//return nil, &CommandFailed{"Not implemented"}
+}
+
 func (k *Kademlia) DoIterativeStore(key ID, value []byte) ([]Contact, error) {
-	return nil, &CommandFailed{"Not implemented"}
+	contacts, _:= k.DoIterativeFindNode(key)
+	ResultList := make([]Contact, 0, 30)
+	for _, con := range contacts {
+		errormsg := k.DoStore(&con, key, value)
+		if errormsg == nil {
+			ResultList = append(ResultList, con)
+		}
+	}
+	return ResultList, nil
+	//return nil, &CommandFailed{"Not implemented"}
 }
 func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 	contacts, value := k.IterativeFindValue(key)
