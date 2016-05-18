@@ -508,28 +508,35 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.Receiver.NodeID){
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-						}
-					}
-					inContactedList := false
-					for _, val := range ContactedList {
-						if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
 							if res.Err != nil {
-								val.status = 1
+								one_shortlist_element.status = 1
 							} else {
-								val.status = 2
+								one_shortlist_element.status = 2
 							}
-							inContactedList = true
+							ContactedList = append(ContactedList, one_shortlist_element)
 						}
 					}
-					if !inContactedList {
-						one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
-						if res.Err != nil {
-							one_shortlist_element.status = 1
-						} else {
-							one_shortlist_element.status = 2
-						}
-						ContactedList = append(ContactedList, one_shortlist_element)
-					}
+					// inContactedList := false
+					// for _, val := range ContactedList {
+					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+					// 		if res.Err != nil {
+					// 			val.status = 1
+					// 		} else {
+					// 			val.status = 2
+					// 		}
+					// 		inContactedList = true
+					// 	}
+					// }
+					// if !inContactedList {
+					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+					// 	if res.Err != nil {
+					// 		one_shortlist_element.status = 1
+					// 	} else {
+					// 		one_shortlist_element.status = 2
+					// 	}
+					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					// }
 					if res.Err == nil {
 						for _, val := range res.Nodes {
 							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
@@ -543,17 +550,17 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					}
 				case timeout =<- timeOutChan:
 					for _, probingval := range ProbingList {
-						inContactedList := false
-						for _, contactedval := range ContactedList {
-							if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
-								contactedval.status = 1
-								inContactedList = true
-							}
-						}
-						if !inContactedList {
+						// inContactedList := false
+						// for _, contactedval := range ContactedList {
+						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+						// 		contactedval.status = 1
+						// 		inContactedList = true
+						// 	}
+						// }
+						// if !inContactedList {
 							probingval.status = 1
 							ContactedList = append(ContactedList, probingval)
-						}
+						// }
 					}
 			}
 		}
@@ -590,28 +597,35 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.Receiver.NodeID){
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-						}
-					}
-					inContactedList := false
-					for _, val := range ContactedList {
-						if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
 							if res.Err != nil {
-								val.status = 1
+								one_shortlist_element.status = 1
 							} else {
-								val.status = 2
+								one_shortlist_element.status = 2
 							}
-							inContactedList = true
+							ContactedList = append(ContactedList, one_shortlist_element)
 						}
 					}
-					if !inContactedList {
-						one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
-						if res.Err != nil {
-							one_shortlist_element.status = 1
-						} else {
-							one_shortlist_element.status = 2
-						}
-						ContactedList = append(ContactedList, one_shortlist_element)
-					}
+					// inContactedList := false
+					// for _, val := range ContactedList {
+					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+					// 		if res.Err != nil {
+					// 			val.status = 1
+					// 		} else {
+					// 			val.status = 2
+					// 		}
+					// 		inContactedList = true
+					// 	}
+					// }
+					// if !inContactedList {
+					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+					// 	if res.Err != nil {
+					// 		one_shortlist_element.status = 1
+					// 	} else {
+					// 		one_shortlist_element.status = 2
+					// 	}
+					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					// }
 					if res.Err == nil {
 						for _, val := range res.Nodes {
 							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
@@ -625,17 +639,17 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					}
 				case timeout =<- timeOutChan:
 					for _, probingval := range ProbingList {
-						inContactedList := false
-						for _, contactedval := range ContactedList {
-							if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
-								contactedval.status = 1
-								inContactedList = true
-							}
-						}
-						if !inContactedList {
+						// inContactedList := false
+						// for _, contactedval := range ContactedList {
+						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+						// 		contactedval.status = 1
+						// 		inContactedList = true
+						// 	}
+						// }
+						// if !inContactedList {
 							probingval.status = 1
 							ContactedList = append(ContactedList, probingval)
-						}
+						// }
 					}
 			}
 		}
@@ -657,7 +671,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 }
 
 func (k *Kademlia) DoIterativeStore(key ID, value []byte) ([]Contact, error) {
-	contacts := k.DoIterativeFindNode(key)
+	contacts, _:= k.DoIterativeFindNode(key)
 	ResultList := make([]Contact, 0, 30)
 	for _, con := range contacts {
 		errormsg := k.DoStore(&con, key, value)
