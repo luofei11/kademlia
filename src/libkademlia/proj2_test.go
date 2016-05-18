@@ -7,6 +7,7 @@ import (
 	"testing"
 	//"time"
 	"fmt"
+	"reflect"
 )
 
 
@@ -46,5 +47,40 @@ func TestIterativeFindNode(t *testing.T) {
 	}
 	if !find1 || !find2 || !find3 {
 		t.Error("Didn't Find All in DoIterativeFindNode!")
+	}
+}
+
+func TestIterativeStore(t *testing.T) {
+	instance1 := NewKademlia("localhost:3456")
+	instance2 := NewKademlia("localhost:4567")
+	instance3 := NewKademlia("localhost:5678")
+
+	host2, port2, _ := StringToIpPort("localhost:4567")
+	instance1.DoPing(host2, port2)
+	host3, port3, _ := StringToIpPort("localhost:5678")
+	instance2.DoPing(host3, port3)
+
+	fmt.Println(instance1)
+	fmt.Println(instance2)
+	fmt.Println(instance3)
+
+	key := instance3.NodeID
+	value := []byte("hello")
+	ContactList, err := instance1.DoIterativeStore(key, value)
+	if err != nil {
+		t.Error("Error doing IterativeStore")
+	}
+
+	contacts, _:= instance1.DoIterativeFindNode(key)
+	testList := make([]Contact, 0, k)
+	for _, con := range contacts {
+		errormsg := instance1.DoStore(&con, key, value)
+		if errormsg == nil {
+			testList = append(testList, con)
+		}
+	}
+
+	if reflect.DeepEqual(ContactList, testList) != true {
+		t.Error("DoIterativeStore test fail.")
 	}
 }
