@@ -121,7 +121,7 @@ func TestIterativeFindValueSimple(t *testing.T) {
 	return
 }
 func TestIterativeFindValue(t *testing.T) {
-	kNum := 50
+	kNum := 100
 	targetIdx := kNum - 23
 	treeList := GenerateTreeIDList(kNum)
 	kList, _ := GenerateTestList(kNum, treeList)
@@ -144,7 +144,7 @@ func TestIterativeFindValue(t *testing.T) {
 		return
 	}
 	res, _ := kList[0].DoIterativeFindValue(searchKey)
-	fmt.Println("WTF Value is: ", res)
+	fmt.Println("Returned Value is: ", res)
 	if res == nil {
 		t.Error("The coressponding value should be found")
 		return

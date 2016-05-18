@@ -700,7 +700,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 	ShortList := make([]ShortListElement, 0, 60)
 	ProbingList := make([]ShortListElement, 0, 3)
 	ContactedList := make([]ShortListElement, 0, 30)
-	iterFindValueChan := make(chan IterFindValueResult, 3)
+	iterFindValueChan := make(chan IterFindValueResult)
 
 	initial_shortlist := k.FindClosest(key)
 	for _, val := range initial_shortlist {
@@ -716,7 +716,8 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 	}
 	valueFound := false
 	var finalValue []byte = nil
-	for (ClosestDistanceNow < ClosestDistancePre && NotEnoughActive(ContactedList) && !valueFound){
+
+	for ((ClosestDistanceNow < ClosestDistancePre) && NotEnoughActive(ContactedList) && (!valueFound)){
 		ClosestDistancePre = ClosestDistanceNow
 		ProbingList = nil
 		//dump(ProbingList)
@@ -729,7 +730,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		timeout := false
 		timeOutChan := make(chan bool)
 		go func() {
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 			timeOutChan <- true
 		}()
 
@@ -739,7 +740,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		allreceive := false
 		for !timeout && !allreceive{
 			select {
-			case res := <- iterFindValueChan:
+			case res := <- iterFindValueChan:{
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.receiver.NodeID){
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
@@ -757,6 +758,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 							}else {
 								one_shortlist_element.hasValue = false
 								fmt.Println("didn't find value")
+								fmt.Println("finalValue is:", finalValue)
 							}
 							ContactedList = append(ContactedList, one_shortlist_element)
 						}
@@ -773,22 +775,15 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 					if len(ProbingList) == 0 {
 						allreceive = true
 					}
-				case timeout =<- timeOutChan:
+				}
+				case timeout =<- timeOutChan:{
 					fmt.Println("timeout!!!!!!")
 					for _, probingval := range ProbingList {
-						// inContactedList := false
-						// for _, contactedval := range ContactedList {
-						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
-						// 		contactedval.status = 1
-						// 		inContactedList = true
-						// 	}
-						// }
-						// if !inContactedList {
 							probingval.status = 1
 							probingval.hasValue = false
 							ContactedList = append(ContactedList, probingval)
-						// }
 					}
+				}
 			}
 		}
 		sort.Sort(ShortListElements(ShortList))
@@ -797,17 +792,22 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		}
 	}
 	sort.Sort(ShortListElements(ContactedList))
-  if valueFound{
-		  fmt.Println("I found value: !", finalValue)
+  close(iterFindValueChan)
+
+  if valueFound {
+		  fmt.Println("I found value1: !", finalValue)
 			for _, con := range ContactedList{
 				if (con.status == 2 && !con.hasValue) {
 					k.DoStore(&con.contact, key, finalValue)
 				}
 			}
+			fmt.Println("I found value2: !", finalValue)
 			return finalValue, nil
-	} else{
-      return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
+	} else {
+		  fmt.Println("Did I enter this condition1")
+      return finalValue, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	}
+	fmt.Println("Did I enter this condition2")
 	return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	//return nil, &CommandFailed{"Not implemented"}
 }
