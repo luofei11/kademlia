@@ -99,29 +99,29 @@ func TestIterativeFindNode(t *testing.T) {
 		t.Error("Didn't Find All in DoIterativeFindNode!")
 	}
 }
-func TestIterativeFindValueSimple(t *testing.T) {
-	instance1 := NewKademlia("localhost:8939")
-	instance2 := NewKademlia("localhost:8940")
-	instance3 := NewKademlia("localhost:8941")
-
-	host2, port2, _ := StringToIpPort("localhost:8940")
-	instance1.DoPing(host2, port2)
-	host3, port3, _ := StringToIpPort("localhost:8941")
-	instance2.DoPing(host3, port3)
-	searchKey := instance3.SelfContact.NodeID
-	searchKey[IDBytes - 1] = 0
-	searchValue := []byte("helloworld!")
-	instance1.DoStore(&instance3.SelfContact, searchKey, searchValue)
-	v, _ := instance2.DoIterativeFindValue(searchKey)
-	if v == nil{
-		t.Error("luofei test failed")
-	}else{
-		t.Log("luofei test succeed!")
-	}
-	return
-}
+// func TestIterativeFindValueSimple(t *testing.T) {
+// 	instance1 := NewKademlia("localhost:8939")
+// 	instance2 := NewKademlia("localhost:8940")
+// 	instance3 := NewKademlia("localhost:8941")
+//
+// 	host2, port2, _ := StringToIpPort("localhost:8940")
+// 	instance1.DoPing(host2, port2)
+// 	host3, port3, _ := StringToIpPort("localhost:8941")
+// 	instance2.DoPing(host3, port3)
+// 	searchKey := instance3.SelfContact.NodeID
+// 	searchKey[IDBytes - 1] = 0
+// 	searchValue := []byte("helloworld!")
+// 	instance1.DoStore(&instance3.SelfContact, searchKey, searchValue)
+// 	v, _ := instance2.DoIterativeFindValue(searchKey)
+// 	if v == nil{
+// 		t.Error("luofei test failed")
+// 	}else{
+// 		t.Log("luofei test succeed!")
+// 	}
+// 	return
+// }
 func TestIterativeFindValue(t *testing.T) {
-	kNum := 100
+	kNum := 50
 	targetIdx := kNum - 23
 	treeList := GenerateTreeIDList(kNum)
 	kList, _ := GenerateTestList(kNum, treeList)
@@ -144,6 +144,7 @@ func TestIterativeFindValue(t *testing.T) {
 		return
 	}
 	res, _ := kList[0].DoIterativeFindValue(searchKey)
+	fmt.Println("I'm going to seach: ", searchKey, randValue)
 	fmt.Println("Returned Value is: ", res)
 	if res == nil {
 		t.Error("The coressponding value should be found")
