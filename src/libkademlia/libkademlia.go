@@ -753,8 +753,10 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 								one_shortlist_element.hasValue = true
 								valueFound = true
 								finalValue = res.val
+								fmt.Println("final Value is :", finalValue)
 							}else {
 								one_shortlist_element.hasValue = false
+								fmt.Println("didn't find value")
 							}
 							ContactedList = append(ContactedList, one_shortlist_element)
 						}
@@ -772,6 +774,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 						allreceive = true
 					}
 				case timeout =<- timeOutChan:
+					fmt.Println("timeout!!!!!!")
 					for _, probingval := range ProbingList {
 						// inContactedList := false
 						// for _, contactedval := range ContactedList {
@@ -795,6 +798,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 	}
 	sort.Sort(ShortListElements(ContactedList))
   if valueFound{
+		  fmt.Println("I found value: !", finalValue)
 			for _, con := range ContactedList{
 				if (con.status == 2 && !con.hasValue) {
 					k.DoStore(&con.contact, key, finalValue)
