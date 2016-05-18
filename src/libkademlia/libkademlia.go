@@ -414,7 +414,25 @@ func (k *Kademlia) DoIterativeStore(key ID, value []byte) ([]Contact, error) {
 	return nil, &CommandFailed{"Not implemented"}
 }
 func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
+	contacts, value := k.IterativeFindValue(key)
+	if value != nil{
+		  return value, nil
+	}
 	return nil, &CommandFailed{"Not implemented"}
+}
+
+func (k *Kademlia) IterativeFindValue(key ID) ([]Contact, []byte){
+	shortList := k.FindClosest(key)
+	if len(shortList) == 0{
+		  return nil, nil
+	}
+	shortList = shortList[:3]
+	closestNode = shortList[0]
+	prevClosestNode = k.SelfContact
+	for !terminate(closestNode, prevClosestNode, shortList){
+    
+
+	}
 }
 
 // For project 3!
