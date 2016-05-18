@@ -700,7 +700,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 	ShortList := make([]ShortListElement, 0, 60)
 	ProbingList := make([]ShortListElement, 0, 3)
 	ContactedList := make([]ShortListElement, 0, 30)
-	iterFindValueChan := make(chan IterFindValueResult)
+	iterFindValueChan := make(chan IterFindValueResult, 3)
 
 	initial_shortlist := k.FindClosest(key)
 	for _, val := range initial_shortlist {
@@ -729,7 +729,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		timeout := false
 		timeOutChan := make(chan bool)
 		go func() {
-			time.Sleep(300 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 			timeOutChan <- true
 		}()
 
@@ -798,9 +798,9 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 			for _, con := range ContactedList{
 				if (con.status == 2 && !con.hasValue) {
 					k.DoStore(&con.contact, key, finalValue)
-					return finalValue, nil
 				}
 			}
+			return finalValue, nil
 	} else{
       return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	}
