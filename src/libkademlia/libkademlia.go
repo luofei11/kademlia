@@ -413,6 +413,7 @@ type ShortListElement struct {
 	contact Contact
 	distance int
 	status int//0 default, 1 inactive, 2 active
+	hasValue bool
 }
 type ShortListElements []ShortListElement
 func (slice ShortListElements) Len() int {
@@ -445,11 +446,24 @@ type IterFindNodeResult struct {
 	Err   error
 }
 
+type IterFindValueResult struct {
+	receiver Contact
+	val []byte
+	contacts []Contact
+	err error
+}
+
 func (k *Kademlia) iteFindNodeHelper(server ShortListElement, id ID, iterFindNodeChan chan IterFindNodeResult) {
 	var res IterFindNodeResult
 	res.Receiver = server.contact
 	res.Nodes, res.Err = k.DoFindNode(&server.contact, id)
 	iterFindNodeChan <- res
+}
+func (k *Kademlia) iterFindValueHelper(server ShortListElement, id ID, iterFindValueChan chan IterFindValueResult) {
+	var res IterFindValueResult
+	res.receiver = server.contact
+	res.val, res.contacts, res.err = k.DoFindValue(&server.contact, id)
+	iterFindValueChan <- res
 }
 
 func notInList(List []ShortListElement, one_shortlist_element ShortListElement) bool {
@@ -469,7 +483,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 
 	initial_shortlist := k.FindClosest(id)
 	for _, val := range initial_shortlist {
-		one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+		one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
 		ShortList = append(ShortList, one_shortlist_element)
 	}
 	sort.Sort(ShortListElements(ShortList))
@@ -508,7 +522,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.Receiver.NodeID){
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
 							if res.Err != nil {
 								one_shortlist_element.status = 1
 							} else {
@@ -539,7 +553,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					// }
 					if res.Err == nil {
 						for _, val := range res.Nodes {
-							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
 							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
 								ShortList = append(ShortList, one_shortlist_element)
 							}
@@ -597,7 +611,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.Receiver.NodeID){
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
 							if res.Err != nil {
 								one_shortlist_element.status = 1
 							} else {
@@ -628,7 +642,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 					// }
 					if res.Err == nil {
 						for _, val := range res.Nodes {
-							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0}
+							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
 							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
 								ShortList = append(ShortList, one_shortlist_element)
 							}
@@ -683,26 +697,117 @@ func (k *Kademlia) DoIterativeStore(key ID, value []byte) ([]Contact, error) {
 	//return nil, &CommandFailed{"Not implemented"}
 }
 func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
-	contacts, value := k.IterativeFindValue(key)
-	if value != nil{
-		  return value, nil
+	ShortList := make([]ShortListElement, 0, 60)
+	ProbingList := make([]ShortListElement, 0, 3)
+	ContactedList := make([]ShortListElement, 0, 30)
+	iterFindValueChan := make(chan IterFindValueResult)
+
+	initial_shortlist := k.FindClosest(key)
+	for _, val := range initial_shortlist {
+		one_shortlist_element := ShortListElement{val, 159 - key.Xor(val.NodeID).PrefixLen(), 0, false}
+		ShortList = append(ShortList, one_shortlist_element)
 	}
-	return nil, &CommandFailed{"Not implemented"}
+	sort.Sort(ShortListElements(ShortList))
+
+	ClosestDistancePre := 160
+	ClosestDistanceNow := 159
+	if len(ShortList) > 0 {
+		ClosestDistanceNow = ShortList[0].distance
+	}
+	valueFound := false
+	var finalValue []byte = nil
+	for (ClosestDistanceNow < ClosestDistancePre && NotEnoughActive(ContactedList) && !valueFound){
+		ClosestDistancePre = ClosestDistanceNow
+		ProbingList = nil
+		//dump(ProbingList)
+		i := 0
+		for i < 3 && i < len(ShortList) {
+			ProbingList = append(ProbingList, ShortList[i])
+			i++
+		}
+		ShortList = append(ShortList[:0], ShortList[i:]...)
+		timeout := false
+		timeOutChan := make(chan bool)
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			timeOutChan <- true
+		}()
+
+		for _, val := range ProbingList {
+			go k.iterFindValueHelper(val, key, iterFindValueChan)
+		}
+		allreceive := false
+		for !timeout && !allreceive{
+			select {
+			case res := <- iterFindValueChan:
+					for index, val := range ProbingList {
+						if val.contact.NodeID.Equals(res.receiver.NodeID){
+							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
+							one_shortlist_element := ShortListElement{res.receiver, 159 - key.Xor(res.receiver.NodeID).PrefixLen(), 0, false}
+							if res.err != nil {
+								one_shortlist_element.status = 1
+							} else {
+								one_shortlist_element.status = 2
+							}
+							if res.val != nil{
+								one_shortlist_element.hasValue = true
+								valueFound = true
+								finalValue = res.val
+							}else {
+								one_shortlist_element.hasValue = false
+							}
+							ContactedList = append(ContactedList, one_shortlist_element)
+						}
+					}
+
+					if res.err == nil {
+						for _, val := range res.contacts {
+							one_shortlist_element := ShortListElement{val, 159 - key.Xor(val.NodeID).PrefixLen(), 0, false}
+							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
+								ShortList = append(ShortList, one_shortlist_element)
+							}
+						}
+					}
+					if len(ProbingList) == 0 {
+						allreceive = true
+					}
+				case timeout =<- timeOutChan:
+					for _, probingval := range ProbingList {
+						// inContactedList := false
+						// for _, contactedval := range ContactedList {
+						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+						// 		contactedval.status = 1
+						// 		inContactedList = true
+						// 	}
+						// }
+						// if !inContactedList {
+							probingval.status = 1
+							probingval.hasValue = false
+							ContactedList = append(ContactedList, probingval)
+						// }
+					}
+			}
+		}
+		sort.Sort(ShortListElements(ShortList))
+		if len(ShortList) > 0 {
+			ClosestDistanceNow = ShortList[0].distance
+		}
+	}
+	sort.Sort(ShortListElements(ContactedList))
+  if valueFound{
+			for _, con := range ContactedList{
+				if (con.status == 2 && !con.hasValue) {
+					k.DoStore(&con.contact, key, finalValue)
+					return finalValue, nil
+				}
+			}
+	} else{
+      return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
+	}
+	return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
+	//return nil, &CommandFailed{"Not implemented"}
 }
 
-func (k *Kademlia) IterativeFindValue(key ID) ([]Contact, []byte){
-	shortList := k.FindClosest(key)
-	if len(shortList) == 0{
-		  return nil, nil
-	}
-	shortList = shortList[:3]
-	closestNode = shortList[0]
-	prevClosestNode = k.SelfContact
-	for !terminate(closestNode, prevClosestNode, shortList){
-    
-
-	}
-}
 
 // For project 3!
 func (k *Kademlia) Vanish(data []byte, numberKeys byte,
