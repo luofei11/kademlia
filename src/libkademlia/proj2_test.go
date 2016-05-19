@@ -12,15 +12,16 @@ import (
 	//"container/heap"
 )
 
-func GenerateTreeKademlia(num_treenode int) []*Kademlia {
+func GenerateTreeKademlia(num_treenode int, start_port int) []*Kademlia {
 	ResultList := make([]*Kademlia, 0, num_treenode)
-	root_kademlia := NewKademlia("localhost:8000")
+	root_address := "localhost:" + strconv.Itoa(start_port)
+	root_kademlia := NewKademlia(root_address)
 	ResultList = append(ResultList, root_kademlia)
 	for i := 1; i < num_treenode; i++ {
-		leaf_address := "localhost:" + strconv.Itoa(8000+i)
+		leaf_address := "localhost:" + strconv.Itoa(start_port + i)
 		leaf_kademlia := NewKademlia(leaf_address)
 		ResultList = append(ResultList, leaf_kademlia)
-		father_address := "localhost:" + strconv.Itoa(8000+i/3)
+		father_address := "localhost:" + strconv.Itoa(start_port + i / 3)
 		host_number, port_number, _ := StringToIpPort(father_address)
 		ResultList[i].DoPing(host_number, port_number)
 	}
@@ -122,6 +123,9 @@ func GenerateTreeKademlia(num_treenode int) []*Kademlia {
 // }
 
 func TestIterativeFindNodeSimple(t *testing.T) {
+	//Structure: 1 - 2 - 3
+	//Simple Test: Do Interative Find Node 3 in 1
+	//Should return all 1, 2, 3
 	instance1 := NewKademlia("localhost:7950")
 	instance2 := NewKademlia("localhost:7951")
 	instance3 := NewKademlia("localhost:7952")
@@ -131,10 +135,6 @@ func TestIterativeFindNodeSimple(t *testing.T) {
 	host3, port3, _ := StringToIpPort("localhost:7952")
 	instance2.DoPing(host3, port3)
 
-	// fmt.Println(instance1)
-	// fmt.Println(instance2)
-	// fmt.Println(instance3)
-
 	contacts, err := instance1.DoIterativeFindNode(instance3.NodeID)
 	if err != nil {
 		t.Error("Error doing IterativeFindNode")
@@ -142,7 +142,6 @@ func TestIterativeFindNodeSimple(t *testing.T) {
 	if contacts == nil || len(contacts) == 0 {
 		t.Error("No contacts were found")
 	}
-	// fmt.Println(contacts)
 	find1 := false
 	find2 := false
 	find3 := false
@@ -161,8 +160,19 @@ func TestIterativeFindNodeSimple(t *testing.T) {
 }
 
 func TestIterativeFindNode(t *testing.T) {
-	num_treenode := 60
-	tree_kademlia := GenerateTreeKademlia(num_treenode)
+	//Tree Structure:
+	/*
+	                          0
+	             /                         \
+	            1                          2
+	     /      |        \         /       |        \
+	   3        4        5        6        7        8
+	/  |  \  /  |  \  /  |  \  /  |  \  /  |  \  /  |  \
+	9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+	*/
+	//Do Iterative Find Node in Node 0. It should be able to find anyone in this tree.
+	num_treenode := 27
+	tree_kademlia := GenerateTreeKademlia(num_treenode, 8000)
 	search_ID := tree_kademlia[num_treenode - 1].NodeID
 	result_list, err := tree_kademlia[0].DoIterativeFindNode(search_ID)
 	if err != nil {
