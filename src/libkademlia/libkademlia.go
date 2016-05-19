@@ -722,7 +722,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		ProbingList = nil
 		//dump(ProbingList)
 		i := 0
-		for i < 3 && i < len(ShortList) {
+		for i < alpha && i < len(ShortList) {
 			ProbingList = append(ProbingList, ShortList[i])
 			i++
 		}
@@ -732,7 +732,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		//valueFoundChan := make(chan bool)
 		//finalValueChan := make(chan []byte)
 		go func() {
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(2000 * time.Millisecond)
 			timeOutChan <- true
 		}()
 
@@ -745,7 +745,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 			case res := <- iterFindValueChan:
 				  fmt.Println("I received something:", res.val)
 					for index, val := range ProbingList {
-						if val.contact.NodeID.Equals(res.receiver.NodeID){
+						if val.contact.NodeID.Equals(res.receiver.NodeID) {
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
 							one_shortlist_element := ShortListElement{res.receiver, 159 - key.Xor(res.receiver.NodeID).PrefixLen(), 0, false}
 							if res.err != nil {
@@ -770,13 +770,14 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 					if res.err == nil {
 						for _, val := range res.contacts {
 							one_shortlist_element := ShortListElement{val, 159 - key.Xor(val.NodeID).PrefixLen(), 0, false}
-							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
+							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element) {
 								ShortList = append(ShortList, one_shortlist_element)
 							}
 						}
 					}
 					if len(ProbingList) == 0 {
 						allreceive = true
+						fmt.Println("All received")
 					}
 
 				case timeout= <- timeOutChan:

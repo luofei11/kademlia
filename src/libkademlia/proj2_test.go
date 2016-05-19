@@ -49,9 +49,9 @@ func GenerateTestList(num int, idList []ID) (kRet KademliaList, cRet []Contact) 
 		var k *Kademlia
 		if idList != nil && i < len(idList) {
 			k = NewKademliaWithId(laddr, idList[i])
-		} //else {
-			//k = NewKademliaWithId(laddr, nil)
-		//}
+		} else {
+			k = NewKademlia(laddr)
+		}
 		cRet = append(cRet, k.SelfContact)
 		kRet = append(kRet, k)
 	}
@@ -121,8 +121,13 @@ func TestIterativeFindNode(t *testing.T) {
 // 	return
 // }
 func TestIterativeFindValue(t *testing.T) {
-	kNum := 50
-	targetIdx := kNum - 23
+	idList = make([]ID, 20)
+	idList[0] = NewRandomID()
+	for i := 1; i < 20; i++ {
+			curID := id[i / 3]
+			curID[i/8] = curID[i/8] ^ (1 << uint8(7-(i%8)))
+			ret[i] = curID
+	}
 	treeList := GenerateTreeIDList(kNum)
 	kList, _ := GenerateTestList(kNum, treeList)
 	for i := 1; i < kNum; i++ {
@@ -143,6 +148,7 @@ func TestIterativeFindValue(t *testing.T) {
 		t.Error("The stored value should equal to each other")
 		return
 	}
+	kList[0].DoFindNode(&kList[targetIdx].SelfContact, searchKey)
 	res, _ := kList[0].DoIterativeFindValue(searchKey)
 	fmt.Println("I'm going to seach: ", searchKey, randValue)
 	fmt.Println("Returned Value is: ", res)
@@ -157,6 +163,7 @@ func TestIterativeFindValue(t *testing.T) {
 	return
 
 }
+
 func TestIterativeStore(t *testing.T) {
 	instance1 := NewKademlia("localhost:3456")
 	instance2 := NewKademlia("localhost:4567")
