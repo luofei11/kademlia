@@ -760,8 +760,8 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 								//fmt.Println("final Value is :", finalValue)
 							} else {
 								one_shortlist_element.hasValue = false
-								fmt.Println("didn't find value")
-								fmt.Println("finalValue is:", finalValue)
+								//fmt.Println("didn't find value")
+								//fmt.Println("finalValue is:", finalValue)
 							}
 							ContactedList = append(ContactedList, one_shortlist_element)
 						}
