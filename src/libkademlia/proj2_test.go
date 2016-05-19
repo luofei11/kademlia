@@ -28,68 +28,6 @@ func GenerateTreeKademlia(num_treenode int, start_port int) []*Kademlia {
 	return ResultList
 }
 
-// var testPort uint16 = 3000
-//
-// const testAddr = "localhost"
-// const divNum = 3
-//
-// type KademliaList []*Kademlia
-//
-// func GenerateRandomIDList(num int) (ret []ID) {
-// 	ret = make([]ID, num)
-// 	for i := 0; i < num; i++ {
-// 		ret[i] = NewRandomID()
-// 	}
-// 	return
-// }
-//
-// func GenerateTreeIDList(num int) (ret []ID) {
-// 	ret = make([]ID, num)
-// 	ret[0] = NewRandomID()
-// 	for i := 1; i < num; i++ {
-// 		if i > 150 {
-// 			ret[i] = NewRandomID()
-// 		} else {
-// 			curID := ret[i/divNum]
-// 			curID[i/8] = curID[i/8] ^ (1 << uint8(7-(i%8)))
-// 			ret[i] = curID
-// 		}
-// 	}
-// 	return ret
-// }
-//
-// func GenerateTestList(num int, idList []ID) (kRet KademliaList, cRet []Contact) {
-// 	kRet = []*Kademlia{}
-// 	cRet = []Contact{}
-// 	for i := 0; i < num; i++ {
-// 		laddr := testAddr + ":" + strconv.Itoa(int(testPort))
-// 		testPort++
-// 		var k *Kademlia
-// 		if idList != nil && i < len(idList) {
-// 			k = NewKademliaWithId(laddr, idList[i])
-// 		} //else {
-// 			//k = NewKademliaWithId(laddr, nil)
-// 		//}
-// 		cRet = append(cRet, k.SelfContact)
-// 		kRet = append(kRet, k)
-// 	}
-// 	return
-// }
-//
-// func (ks KademliaList) ConnectTo(k1, k2 int) {
-// 	ks[k1].DoPing(ks[k2].SelfContact.Host, ks[k2].SelfContact.Port)
-// }
-//
-// func SortContact(input []Contact, key ID) (ret []Contact) {
-// 	cHeap := &ContactHeap{input, key}
-// 	heap.Init(cHeap)
-// 	ret = []Contact{}
-// 	for cHeap.Len() > 0 {
-// 		ret = append(ret, heap.Pop(cHeap).(Contact))
-// 	}
-// 	return
-// }
-
 func TestIterativeFindNodeSimple(t *testing.T) {
 	//Structure: 1 - 2 - 3
 	//Simple Test: Do Interative Find Node 3 in 1
@@ -141,50 +79,23 @@ func TestIterativeFindNode(t *testing.T) {
 	//Do Iterative Find Node in Node 0. It should be able to find anyone in this tree.
 	num_treenode := 27
 	tree_kademlia := GenerateTreeKademlia(num_treenode, 8000)
-	search_ID := tree_kademlia[num_treenode - 1].NodeID
-	result_list, err := tree_kademlia[0].DoIterativeFindNode(search_ID)
-	if err != nil {
-		t.Error("DoIterativeFindNode Return Error!")
-	}
-	result_list_for_sort := make([]ShortListElement, 0, 20)
-	for _, val := range result_list {
-		one_shortlist_element := ShortListElement{val, 159 - search_ID.Xor(val.NodeID).PrefixLen(), 0, false}
-		result_list_for_sort = append(result_list_for_sort, one_shortlist_element)
-	}
-	sort.Sort(ShortListElements(result_list_for_sort))
-	if !result_list_for_sort[0].contact.NodeID.Equals(search_ID) {
-		t.Error("DoIterativeFindNode Doesn't Find Search_ID!")
+	for i := 1; i < num_treenode; i++ {
+		search_ID := tree_kademlia[i].NodeID
+		result_list, err := tree_kademlia[0].DoIterativeFindNode(search_ID)
+		if err != nil {
+			t.Error("DoIterativeFindNode Return Error: ", i)
+		}
+		result_list_for_sort := make([]ShortListElement, 0, 20)
+		for _, val := range result_list {
+			one_shortlist_element := ShortListElement{val, 159 - search_ID.Xor(val.NodeID).PrefixLen(), 0, false}
+			result_list_for_sort = append(result_list_for_sort, one_shortlist_element)
+		}
+		sort.Sort(ShortListElements(result_list_for_sort))
+		if !result_list_for_sort[0].contact.NodeID.Equals(search_ID) {
+			t.Error("DoIterativeFindNode Doesn't Find Search_ID: ", i)
+		}
 	}
 	return
-
-	// kNum := 60
-	// targetIdx := kNum - 1
-	// treeList := GenerateTreeIDList(kNum)
-	// fmt.Println("treeList:", treeList)
-	// kList, _ := GenerateTestList(kNum, treeList)
-	// fmt.Println("kList:", kList)
-	// for i := 1; i < kNum; i++ {
-	// 	kList.ConnectTo(i, i/divNum)
-	// }
-	// fmt.Println("KList After Connect:", kList)
-	// time.Sleep(100 * time.Millisecond)
-	// searchKey := kList[targetIdx].SelfContact.NodeID
-	// searchKey[IDBytes-1] = 0
-	// fmt.Println("searchKey:", searchKey)
-	// // res_Nodes, res_Err := kList[0].DoFindNode(&kList[targetIdx].SelfContact, searchKey)
-	// // fmt.Println("KList0 KBuckets:", kList[0].table)
-	// // fmt.Println("DoFindNode Result:", res_Nodes, res_Err)
-	// res, _ := kList[0].DoIterativeFindNode(searchKey)
-	// // res_Nodes, res_Err := kList[0].DoFindNode(&kList[2].SelfContact, searchKey)
-	// // fmt.Println("DoFindNode Result:", res_Nodes, res_Err)
-	// fmt.Println("IterFindNode Result:", res)
-	// res = SortContact(res, searchKey)
-	// fmt.Println("Result Sorted:", res)
-	// if !res[0].NodeID.Equals(kList[targetIdx].SelfContact.NodeID) {
-	// 	t.Error("Search result doesn't match: " + res[0].NodeID.AsString() + "!=" + kList[targetIdx].SelfContact.NodeID.AsString())
-	// }
-	// t.Log("TestIterativeFindNode done successfully!\n")
-	// return
 }
 
 // func TestIterativeFindValueSimple(t *testing.T) {
