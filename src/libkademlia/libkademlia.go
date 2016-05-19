@@ -743,7 +743,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		for !timeout && !allreceive {
 			select {
 			case res := <- iterFindValueChan:
-				  fmt.Println("I received something:", res.val)
+				  //fmt.Println("I received something:", res.val)
 					for index, val := range ProbingList {
 						if val.contact.NodeID.Equals(res.receiver.NodeID) {
 							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
@@ -757,7 +757,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 								one_shortlist_element.hasValue = true
 								valueFound = true
 								finalValue = res.val
-								fmt.Println("final Value is :", finalValue)
+								//fmt.Println("final Value is :", finalValue)
 							} else {
 								one_shortlist_element.hasValue = false
 								fmt.Println("didn't find value")
@@ -777,11 +777,11 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 					}
 					if len(ProbingList) == 0 {
 						allreceive = true
-						fmt.Println("All received")
+						//fmt.Println("All received")
 					}
 
 				case timeout= <- timeOutChan:
-					fmt.Println("timeout!!!!!!")
+					//fmt.Println("timeout!!!!!!")
 					for _, probingval := range ProbingList {
 							probingval.status = 1
 							probingval.hasValue = false
@@ -798,19 +798,17 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
   close(iterFindValueChan)
 
   if valueFound {
-		  fmt.Println("I found value1: !", finalValue)
+		  //fmt.Println("I found value1: !", finalValue)
 			for _, con := range ContactedList{
 				if (con.status == 2 && !con.hasValue) {
 					k.DoStore(&con.contact, key, finalValue)
 				}
 			}
-			fmt.Println("I found value2: !", finalValue)
 			return finalValue, nil
 	} else {
-		  fmt.Println("Did I enter this condition1?")
+		  //fmt.Println("Did I enter this condition1?")
       return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	}
-	fmt.Println("Did I enter this condition2?")
 	return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	//return nil, &CommandFailed{"Not implemented"}
 }
