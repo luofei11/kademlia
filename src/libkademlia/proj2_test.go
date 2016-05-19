@@ -220,10 +220,9 @@ func TestIterativeFindNode(t *testing.T) {
 }
 func TestIterativeFindValue(t *testing.T) {
 	num_treenode := 27
-	tree_kademlia := GenerateTreeKademlia(num_treenode)
+	tree_kademlia := GenerateTreeKademlia(num_treenode, 8050)
 	time.Sleep(100 * time.Millisecond)
 	searchKey := tree_kademlia[num_treenode - 1].NodeID
-	searchKey[IDBytes-1] = 0
 	searchValue := []byte("hello world!")
 	tree_kademlia[(num_treenode - 1) / 3].DoStore(&tree_kademlia[num_treenode - 1].SelfContact, searchKey, searchValue)
 	time.Sleep(100 * time.Millisecond)
