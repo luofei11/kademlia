@@ -732,7 +732,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		//valueFoundChan := make(chan bool)
 		//finalValueChan := make(chan []byte)
 		go func() {
-			time.Sleep(2000 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 			timeOutChan <- true
 		}()
 

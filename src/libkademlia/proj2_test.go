@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 	"sort"
-	"time"
+	//"time"
 	"fmt"
 	"reflect"
 	//"container/heap"
@@ -193,13 +193,13 @@ func TestIterativeFindNode(t *testing.T) {
 }
 func TestIterativeFindValue(t *testing.T) {
 	num_treenode := 27
+	target := 24
 	tree_kademlia := GenerateTreeKademlia(num_treenode, 8050)
-	time.Sleep(100 * time.Millisecond)
-	searchKey := tree_kademlia[num_treenode - 1].NodeID
+	searchKey := tree_kademlia[target].NodeID
 	searchValue := []byte("hello world!")
-	tree_kademlia[(num_treenode - 1) / 3].DoStore(&tree_kademlia[num_treenode - 1].SelfContact, searchKey, searchValue)
-	time.Sleep(100 * time.Millisecond)
-	v, err := tree_kademlia[num_treenode - 1].LocalFindValue(searchKey)
+	fmt.Println("Seach value is: ", searchValue)
+	tree_kademlia[target / 3].DoStore(&tree_kademlia[target].SelfContact, searchKey, searchValue)
+	v, err := tree_kademlia[target].LocalFindValue(searchKey)
 	if err != nil {
 		t.Error("DoStore error!")
 		return
@@ -208,6 +208,7 @@ func TestIterativeFindValue(t *testing.T) {
 		t.Error("Value doesn't match!")
 		return
 	}
+	//tree_kademlia[0].DoFindNode(&tree_kademlia[target].SelfContact, searchKey)
 	resultVal, err := tree_kademlia[0].DoIterativeFindValue(searchKey)
 	if err != nil {
 		t.Error("DoIterativeFindValue Return Error!")
@@ -219,27 +220,27 @@ func TestIterativeFindValue(t *testing.T) {
 	}
 	return
 }
-// func TestIterativeFindValueSimple(t *testing.T) {
-// 	instance1 := NewKademlia("localhost:8939")
-// 	instance2 := NewKademlia("localhost:8940")
-// 	instance3 := NewKademlia("localhost:8941")
-//
-// 	host2, port2, _ := StringToIpPort("localhost:8940")
-// 	instance1.DoPing(host2, port2)
-// 	host3, port3, _ := StringToIpPort("localhost:8941")
-// 	instance2.DoPing(host3, port3)
-// 	searchKey := instance3.SelfContact.NodeID
-// 	searchKey[IDBytes - 1] = 0
-// 	searchValue := []byte("helloworld!")
-// 	instance1.DoStore(&instance3.SelfContact, searchKey, searchValue)
-// 	v, _ := instance2.DoIterativeFindValue(searchKey)
-// 	if v == nil{
-// 		t.Error("luofei test failed")
-// 	}else{
-// 		t.Log("luofei test succeed!")
-// 	}
-// 	return
-// }
+func TestIterativeFindValueSimple(t *testing.T) {
+	instance1 := NewKademlia("localhost:8939")
+	instance2 := NewKademlia("localhost:8940")
+	instance3 := NewKademlia("localhost:8941")
+
+	host2, port2, _ := StringToIpPort("localhost:8940")
+	instance1.DoPing(host2, port2)
+	host3, port3, _ := StringToIpPort("localhost:8941")
+	instance2.DoPing(host3, port3)
+	searchKey := instance3.SelfContact.NodeID
+	searchKey[IDBytes - 1] = 0
+	searchValue := []byte("helloworld!")
+	instance1.DoStore(&instance3.SelfContact, searchKey, searchValue)
+	v, _ := instance2.DoIterativeFindValue(searchKey)
+	if v == nil{
+		t.Error("Simple IterFindValue failed")
+	}else{
+		t.Log("Simple IterFindValue succeed!")
+	}
+	return
+}
 // func TestIterativeFindValue(t *testing.T) {
 // 	idList = make([]ID, 20)
 // 	idList[0] = NewRandomID()
