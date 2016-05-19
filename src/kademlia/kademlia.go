@@ -311,7 +311,10 @@ func executeLine(k *libkademlia.Kademlia, line string) (response string) {
 		if err != nil {
 			response = fmt.Sprintf("ERR: %s", err)
 		} else {
-			response = fmt.Sprintf("OK: Got %d contacts", len(contacts))
+			response = "OK: Got " + strconv.Itoa(len(contacts))  + " contacts.\n"
+			for _, con := range contacts{
+				response = response + con.NodeID.AsString() + "\n"
+			}
 		}
 
 	case toks[0] == "iterativeStore":
