@@ -8,7 +8,7 @@ import (
 	"sort"
 	//"time"
 	"fmt"
-	"reflect"
+	//"reflect"
 	//"container/heap"
 )
 
@@ -19,7 +19,9 @@ func GenerateTreeKademlia(num_treenode int, start_port int) []*Kademlia {
 	ResultList = append(ResultList, root_kademlia)
 	for i := 1; i < num_treenode; i++ {
 		leaf_address := "localhost:" + strconv.Itoa(start_port + i)
-		leaf_kademlia := NewKademlia(leaf_address)
+		leaf_NodeID := ResultList[i / 3].NodeID
+		leaf_NodeID[i/8] = leaf_NodeID[i/8] ^ (1 << uint8(7-(i%8)))
+		leaf_kademlia := NewKademliaWithId(leaf_address, leaf_NodeID)
 		ResultList = append(ResultList, leaf_kademlia)
 		father_address := "localhost:" + strconv.Itoa(start_port + i / 3)
 		host_number, port_number, _ := StringToIpPort(father_address)
@@ -27,100 +29,6 @@ func GenerateTreeKademlia(num_treenode int, start_port int) []*Kademlia {
 	}
 	return ResultList
 }
-
-// func GenerateTreeIDList(num int) (ret []ID) {
-// 	ret = make([]ID, num)
-// 	ret[0] = NewRandomID()
-// 	for i := 1; i < num; i++ {
-// 		if i > 150 {
-// 			ret[i] = NewRandomID()
-// 		} else {
-// 			curID := ret[i/divNum]
-// 			curID[i/8] = curID[i/8] ^ (1 << uint8(7-(i%8)))
-// 			ret[i] = curID
-// 		}
-// 	}
-// 	return ret
-// }
-
-// func GenerateTestList(num int, idList []ID) (kRet KademliaList, cRet []Contact) {
-// 	kRet = []*Kademlia{}
-// 	cRet = []Contact{}
-// 	for i := 0; i < num; i++ {
-// 		laddr := testAddr + ":" + strconv.Itoa(int(testPort))
-// 		testPort++
-// 		var k *Kademlia
-// 		if idList != nil && i < len(idList) {
-// 			k = NewKademliaWithId(laddr, idList[i])
-// 		} else {
-// 			k = NewKademlia(laddr)
-// 		}
-// 		cRet = append(cRet, k.SelfContact)
-// 		kRet = append(kRet, k)
-// 	}
-// 	return
-// }
-// var testPort uint16 = 3000
-//
-// const testAddr = "localhost"
-// const divNum = 3
-//
-// type KademliaList []*Kademlia
-//
-// func GenerateRandomIDList(num int) (ret []ID) {
-// 	ret = make([]ID, num)
-// 	for i := 0; i < num; i++ {
-// 		ret[i] = NewRandomID()
-// 	}
-// 	return
-// }
-//
-// func GenerateTreeIDList(num int) (ret []ID) {
-// 	ret = make([]ID, num)
-// 	ret[0] = NewRandomID()
-// 	for i := 1; i < num; i++ {
-// 		if i > 150 {
-// 			ret[i] = NewRandomID()
-// 		} else {
-// 			curID := ret[i/divNum]
-// 			curID[i/8] = curID[i/8] ^ (1 << uint8(7-(i%8)))
-// 			ret[i] = curID
-// 		}
-// 	}
-// 	return ret
-// }
-//
-// func GenerateTestList(num int, idList []ID) (kRet KademliaList, cRet []Contact) {
-// 	kRet = []*Kademlia{}
-// 	cRet = []Contact{}
-// 	for i := 0; i < num; i++ {
-// 		laddr := testAddr + ":" + strconv.Itoa(int(testPort))
-// 		testPort++
-// 		var k *Kademlia
-// 		if idList != nil && i < len(idList) {
-// 			k = NewKademliaWithId(laddr, idList[i])
-// 		} //else {
-// 			//k = NewKademliaWithId(laddr, nil)
-// 		//}
-// 		cRet = append(cRet, k.SelfContact)
-// 		kRet = append(kRet, k)
-// 	}
-// 	return
-// }
-//
-// func (ks KademliaList) ConnectTo(k1, k2 int) {
-// 	ks[k1].DoPing(ks[k2].SelfContact.Host, ks[k2].SelfContact.Port)
-// }
-//
-// func SortContact(input []Contact, key ID) (ret []Contact) {
-// 	cHeap := &ContactHeap{input, key}
-// 	heap.Init(cHeap)
-// 	ret = []Contact{}
-// 	for cHeap.Len() > 0 {
-// 		ret = append(ret, heap.Pop(cHeap).(Contact))
-// 	}
-// 	return
-// }
 
 func TestIterativeFindNodeSimple(t *testing.T) {
 	//Structure: 1 - 2 - 3
@@ -192,12 +100,22 @@ func TestIterativeFindNode(t *testing.T) {
 	return
 }
 func TestIterativeFindValue(t *testing.T) {
+	//Tree Structure:
+	/*
+	                          0
+	             /                         \
+	            1                          2
+	     /      |        \         /       |        \
+	   3        4        5        6        7        8
+	/  |  \  /  |  \  /  |  \  /  |  \  /  |  \  /  |  \
+	9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+	*/
 	num_treenode := 27
-	target := 24
+	target := 16
 	tree_kademlia := GenerateTreeKademlia(num_treenode, 8050)
 	searchKey := tree_kademlia[target].NodeID
 	searchValue := []byte("hello world!")
-	fmt.Println("Seach value is: ", searchValue)
+	//fmt.Println("Search value is: ", searchValue)
 	tree_kademlia[target / 3].DoStore(&tree_kademlia[target].SelfContact, searchKey, searchValue)
 	v, err := tree_kademlia[target].LocalFindValue(searchKey)
 	if err != nil {
@@ -209,6 +127,9 @@ func TestIterativeFindValue(t *testing.T) {
 		return
 	}
 	//tree_kademlia[0].DoFindNode(&tree_kademlia[target].SelfContact, searchKey)
+
+	fmt.Println("Last Node:", *tree_kademlia[num_treenode - 1])
+
 	resultVal, err := tree_kademlia[0].DoIterativeFindValue(searchKey)
 	if err != nil {
 		t.Error("DoIterativeFindValue Return Error!")
@@ -241,152 +162,28 @@ func TestIterativeFindValueSimple(t *testing.T) {
 	}
 	return
 }
-// func TestIterativeFindValue(t *testing.T) {
-// 	idList = make([]ID, 20)
-// 	idList[0] = NewRandomID()
-// 	for i := 1; i < 20; i++ {
-// 			curID := id[i / 3]
-// 			curID[i/8] = curID[i/8] ^ (1 << uint8(7-(i%8)))
-// 			ret[i] = curID
-// 	}
-// 	treeList := GenerateTreeIDList(kNum)
-// 	kList, _ := GenerateTestList(kNum, treeList)
-// 	for i := 1; i < kNum; i++ {
-// 		kList.ConnectTo(i, i/divNum)
-// 	}
-// 	time.Sleep(100 * time.Millisecond)
-// 	searchKey := kList[targetIdx].SelfContact.NodeID
-// 	searchKey[IDBytes-1] = 0
-// 	randValue := []byte(NewRandomID().AsString())
-// 	kList[targetIdx/divNum].DoStore(&kList[targetIdx].SelfContact, searchKey, randValue)
-// 	time.Sleep(3 * time.Millisecond)
-// 	retVal, _ := kList[targetIdx].LocalFindValue(searchKey)
-// 	if retVal == nil {
-// 		t.Error("The target node should have the key/value pair")
-// 		return
-// 	}
-// 	if string(retVal) != string(randValue) {
-// 		t.Error("The stored value should equal to each other")
-// 		return
-// 	}
-// 	kList[0].DoFindNode(&kList[targetIdx].SelfContact, searchKey)
-// 	res, _ := kList[0].DoIterativeFindValue(searchKey)
-// 	fmt.Println("I'm going to seach: ", searchKey, randValue)
-// 	fmt.Println("Returned Value is: ", res)
-// 	if res == nil {
-// 		t.Error("The coressponding value should be found")
-// 		return
-// 	}
-// 	if string(res) != string(randValue) {
-// 		t.Error("Search result doesn't match: " + string(res) + "!=" + string(randValue))
-// 	}
-// 	t.Log("TestIterativeFindValue done successfully!\n")
-// 	return
-//
-// }
+
 
 func TestIterativeStore(t *testing.T) {
-	instance1 := NewKademlia("localhost:3456")
-	instance2 := NewKademlia("localhost:4567")
-	instance3 := NewKademlia("localhost:5678")
-
-	host2, port2, _ := StringToIpPort("localhost:4567")
-	instance1.DoPing(host2, port2)
-	host3, port3, _ := StringToIpPort("localhost:5678")
-	instance2.DoPing(host3, port3)
-
-	fmt.Println(instance1)
-	fmt.Println(instance2)
-	fmt.Println(instance3)
-
-	key := instance3.NodeID
-	value := []byte("hello")
-	ContactList, err := instance1.DoIterativeStore(key, value)
+	num_treenode := 27
+	target := 24
+	tree_kademlia := GenerateTreeKademlia(num_treenode, 8100)
+	searchKey := tree_kademlia[target].NodeID
+	searchValue := []byte("hello world!")
+	//fmt.Println("Search value is: ", searchValue)
+	_, err := tree_kademlia[0].DoIterativeStore(searchKey, searchValue)
+  if err != nil {
+    t.Error("IterativeStore returns error!")
+		return
+	}
+	v, err := tree_kademlia[target].LocalFindValue(searchKey)
 	if err != nil {
-		t.Error("Error doing IterativeStore")
+		t.Error("didn't find value!")
+		return
 	}
-
-	contacts, _:= instance1.DoIterativeFindNode(key)
-	testList := make([]Contact, 0, k)
-	for _, con := range contacts {
-		errormsg := instance1.DoStore(&con, key, value)
-		if errormsg == nil {
-			testList = append(testList, con)
-		}
+	if string(v) != string(searchValue) {
+		t.Error("Value doesn't match!")
+		return
 	}
-
-	if reflect.DeepEqual(ContactList, testList) != true {
-		t.Error("DoIterativeStore test fail.")
-	}
+	return
 }
-// func TestIterativeFindValue(t *testing.T) {
-// 	kNum := 50
-// 	targetIdx := kNum - 23
-// 	treeList := GenerateTreeIDList(kNum)
-// 	kList, _ := GenerateTestList(kNum, treeList)
-// 	for i := 1; i < kNum; i++ {
-// 		kList.ConnectTo(i, i/divNum)
-// 	}
-// 	time.Sleep(100 * time.Millisecond)
-// 	searchKey := kList[targetIdx].SelfContact.NodeID
-// 	searchKey[IDBytes-1] = 0
-// 	randValue := []byte(NewRandomID().AsString())
-// 	kList[targetIdx/divNum].DoStore(&kList[targetIdx].SelfContact, searchKey, randValue)
-// 	time.Sleep(3 * time.Millisecond)
-// 	retVal, _ := kList[targetIdx].LocalFindValue(searchKey)
-// 	if retVal == nil {
-// 		t.Error("The target node should have the key/value pair")
-// 		return
-// 	}
-// 	if string(retVal) != string(randValue) {
-// 		t.Error("The stored value should equal to each other")
-// 		return
-// 	}
-// 	res, _ := kList[0].DoIterativeFindValue(searchKey)
-// 	fmt.Println("I'm going to seach: ", searchKey, randValue)
-// 	fmt.Println("Returned Value is: ", res)
-// 	if res == nil {
-// 		t.Error("The coressponding value should be found")
-// 		return
-// 	}
-// 	if string(res) != string(randValue) {
-// 		t.Error("Search result doesn't match: " + string(res) + "!=" + string(randValue))
-// 	}
-// 	t.Log("TestIterativeFindValue done successfully!\n")
-// 	return
-//
-// }
-// func TestIterativeStore(t *testing.T) {
-// 	instance1 := NewKademlia("localhost:3456")
-// 	instance2 := NewKademlia("localhost:4567")
-// 	instance3 := NewKademlia("localhost:5678")
-//
-// 	host2, port2, _ := StringToIpPort("localhost:4567")
-// 	instance1.DoPing(host2, port2)
-// 	host3, port3, _ := StringToIpPort("localhost:5678")
-// 	instance2.DoPing(host3, port3)
-//
-// 	fmt.Println(instance1)
-// 	fmt.Println(instance2)
-// 	fmt.Println(instance3)
-//
-// 	key := instance3.NodeID
-// 	value := []byte("hello")
-// 	ContactList, err := instance1.DoIterativeStore(key, value)
-// 	if err != nil {
-// 		t.Error("Error doing IterativeStore")
-// 	}
-//
-// 	contacts, _:= instance1.DoIterativeFindNode(key)
-// 	testList := make([]Contact, 0, k)
-// 	for _, con := range contacts {
-// 		errormsg := instance1.DoStore(&con, key, value)
-// 		if errormsg == nil {
-// 			testList = append(testList, con)
-// 		}
-// 	}
-//
-// 	if reflect.DeepEqual(ContactList, testList) != true {
-// 		t.Error("DoIterativeStore test fail.")
-// 	}
-// }
