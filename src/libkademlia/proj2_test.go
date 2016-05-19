@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 	"fmt"
-	"reflect"
+	//"reflect"
 	//"container/heap"
 )
 
@@ -19,7 +19,9 @@ func GenerateTreeKademlia(num_treenode int, start_port int) []*Kademlia {
 	ResultList = append(ResultList, root_kademlia)
 	for i := 1; i < num_treenode; i++ {
 		leaf_address := "localhost:" + strconv.Itoa(start_port + i)
-		leaf_kademlia := NewKademlia(leaf_address)
+		leaf_NodeID := ResultList[i / 3].NodeID
+		leaf_NodeID[i/8] = leaf_NodeID[i/8] ^ (1 << uint8(7-(i%8)))
+		leaf_kademlia := NewKademliaWithId(leaf_address, leaf_NodeID)
 		ResultList = append(ResultList, leaf_kademlia)
 		father_address := "localhost:" + strconv.Itoa(start_port + i / 3)
 		host_number, port_number, _ := StringToIpPort(father_address)
@@ -208,6 +210,7 @@ func TestIterativeFindValue(t *testing.T) {
 		t.Error("Value doesn't match!")
 		return
 	}
+	fmt.Println("Last Node:", *tree_kademlia[num_treenode - 1])
 	resultVal, err := tree_kademlia[0].DoIterativeFindValue(searchKey)
 	if err != nil {
 		t.Error("DoIterativeFindValue Return Error!")
@@ -284,40 +287,40 @@ func TestIterativeFindValue(t *testing.T) {
 //
 // }
 
-func TestIterativeStore(t *testing.T) {
-	instance1 := NewKademlia("localhost:3456")
-	instance2 := NewKademlia("localhost:4567")
-	instance3 := NewKademlia("localhost:5678")
-
-	host2, port2, _ := StringToIpPort("localhost:4567")
-	instance1.DoPing(host2, port2)
-	host3, port3, _ := StringToIpPort("localhost:5678")
-	instance2.DoPing(host3, port3)
-
-	fmt.Println(instance1)
-	fmt.Println(instance2)
-	fmt.Println(instance3)
-
-	key := instance3.NodeID
-	value := []byte("hello")
-	ContactList, err := instance1.DoIterativeStore(key, value)
-	if err != nil {
-		t.Error("Error doing IterativeStore")
-	}
-
-	contacts, _:= instance1.DoIterativeFindNode(key)
-	testList := make([]Contact, 0, k)
-	for _, con := range contacts {
-		errormsg := instance1.DoStore(&con, key, value)
-		if errormsg == nil {
-			testList = append(testList, con)
-		}
-	}
-
-	if reflect.DeepEqual(ContactList, testList) != true {
-		t.Error("DoIterativeStore test fail.")
-	}
-}
+// func TestIterativeStore(t *testing.T) {
+// 	instance1 := NewKademlia("localhost:3456")
+// 	instance2 := NewKademlia("localhost:4567")
+// 	instance3 := NewKademlia("localhost:5678")
+//
+// 	host2, port2, _ := StringToIpPort("localhost:4567")
+// 	instance1.DoPing(host2, port2)
+// 	host3, port3, _ := StringToIpPort("localhost:5678")
+// 	instance2.DoPing(host3, port3)
+//
+// 	fmt.Println(instance1)
+// 	fmt.Println(instance2)
+// 	fmt.Println(instance3)
+//
+// 	key := instance3.NodeID
+// 	value := []byte("hello")
+// 	ContactList, err := instance1.DoIterativeStore(key, value)
+// 	if err != nil {
+// 		t.Error("Error doing IterativeStore")
+// 	}
+//
+// 	contacts, _:= instance1.DoIterativeFindNode(key)
+// 	testList := make([]Contact, 0, k)
+// 	for _, con := range contacts {
+// 		errormsg := instance1.DoStore(&con, key, value)
+// 		if errormsg == nil {
+// 			testList = append(testList, con)
+// 		}
+// 	}
+//
+// 	if reflect.DeepEqual(ContactList, testList) != true {
+// 		t.Error("DoIterativeStore test fail.")
+// 	}
+// }
 // func TestIterativeFindValue(t *testing.T) {
 // 	kNum := 50
 // 	targetIdx := kNum - 23
