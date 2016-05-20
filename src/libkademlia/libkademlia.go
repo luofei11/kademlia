@@ -802,6 +802,7 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 			for _, con := range ContactedList{
 				if (con.status == 2 && !con.hasValue) {
 					k.DoStore(&con.contact, key, finalValue)
+					return finalValue, nil
 				}
 			}
 			return finalValue, nil
