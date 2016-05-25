@@ -74,7 +74,7 @@ func decrypt(key []byte, ciphertext []byte) (text []byte) {
 }
 func extractKeysFromMap(share_map map[byte][]byte) (ret [][]byte) {
 	ret := make([][]byte, 0)
-	
+
 }
 
 func (k *Kademlia) VanishData(data []byte, numberKeys byte,
@@ -97,7 +97,7 @@ func (k *Kademlia) ShareKeys(numberKeys byte, threshold byte, key []byte, access
 	if err == nil {
 		location_ids := CalculateSharedKeyLocations(accessKey, (int64)numberKeys)
 		for i := 0; i < (int)numberKeys; i++ {
-			  k.DoIterativeStore(location_ids[i], share)
+			  k.DoIterativeStore(location_ids[i], share_keys[i])
 		}
 	}
 }
