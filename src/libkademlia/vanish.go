@@ -15,6 +15,7 @@ type VanashingDataObject struct {
 	Ciphertext []byte
 	NumberKeys byte
 	Threshold  byte
+	Timeout    int
 }
 
 func GenerateRandomCryptoKey() (ret []byte) {
@@ -74,6 +75,15 @@ func decrypt(key []byte, ciphertext []byte) (text []byte) {
 
 func (k *Kademlia) VanishData(data []byte, numberKeys byte,
 	threshold byte, timeoutSeconds int) (vdo VanashingDataObject) {
+	key := GenerateRandomCryptoKey()
+	accessKey := GenerateRandomAccessKey()
+	ciphertext := encrypt(key, data)
+	k.ShareKeys(numberKeys, threshold, key, accessKey)
+	vdo.AccessKey = accessKey
+	vdo.Ciphertext = ciphertext
+	vdo.NumberKeys = numberKeys
+	vdo.Threshold = threshold
+	vdo.Timeout = timeoutSeconds
 	return
 }
 
