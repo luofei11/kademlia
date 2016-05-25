@@ -7,7 +7,7 @@ import (
 	"io"
 	mathrand "math/rand"
 	"time"
-	//"sss"
+	"sss"
 )
 
 type VanashingDataObject struct {
@@ -72,6 +72,10 @@ func decrypt(key []byte, ciphertext []byte) (text []byte) {
 	stream.XORKeyStream(ciphertext, ciphertext)
 	return ciphertext
 }
+func extractKeysFromMap(share_map map[byte][]byte) (ret [][]byte) {
+	ret := make([][]byte, 0)
+	
+}
 
 func (k *Kademlia) VanishData(data []byte, numberKeys byte,
 	threshold byte, timeoutSeconds int) (vdo VanashingDataObject) {
@@ -87,6 +91,16 @@ func (k *Kademlia) VanishData(data []byte, numberKeys byte,
 	return
 }
 
+func (k *Kademlia) ShareKeys(numberKeys byte, threshold byte, key []byte, accessKey int64) {
+  share_map, err := sss.Split(numberKeys, threshold, key)
+	share_keys := extractKeysFromMap(share_map)
+	if err == nil {
+		location_ids := CalculateSharedKeyLocations(accessKey, (int64)numberKeys)
+		for i := 0; i < (int)numberKeys; i++ {
+			  k.DoIterativeStore(location_ids[i], share)
+		}
+	}
+}
 func (k *Kademlia) UnvanishData(vdo VanashingDataObject) (data []byte) {
 	return nil
 }
