@@ -822,5 +822,8 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 }
 
 func (k *Kademlia) Unvanish(searchKey ID) (data []byte) {
-	return nil
+	data = nil
+	vdo = GetVDO(ID)
+	data = k.UnvanishData(vdo VanashingDataObject)
+	return
 }
