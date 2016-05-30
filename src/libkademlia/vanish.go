@@ -106,5 +106,22 @@ func (k *Kademlia) ShareKeys(numberKeys byte, threshold byte, key []byte, access
 	}
 }
 func (k *Kademlia) UnvanishData(vdo VanashingDataObject) (data []byte) {
-	return nil
+	location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)vdo.NumberKeys)
+	share_map := make(map[byte][]byte)
+	data = nil
+	for _, id := range location_ids {
+		val, _ := kadem.DoIterativeFindValue(id)
+		if val != nil {
+			k := val[0]
+			v := val[1:]
+			share_map[k] = v
+		}
+	}
+	if len(m) < vdo.Threshold {
+		fmt.Println("Not Enough Map Items!")
+		return
+	}
+	key = sss.Combine(share_map)
+	data = decrypt(key, vdo.Ciphertext)
+	return
 }
