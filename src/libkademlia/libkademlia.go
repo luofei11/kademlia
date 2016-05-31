@@ -850,9 +850,9 @@ func (k *Kademlia) GetVDOHelper(searchkey ID) (vdo VanashingDataObject){
 	}
 	defer client.Close()
 	
-	req := GetVDORequest{k.SelfContact, NewRandomID(), vdoId}
+	req := GetVDORequest{k.SelfContact, NewRandomID(), searchkey}
 	var res GetVDOResult
-	err = client.Call("KademliaCore.GetVDO", req, &res)
+	err = client.Call("KademliaRPC.GetVDO", req, &res)
 	if err != nil {
 		fmt.Println("Err: " + err.Error())
 		return nil
