@@ -830,11 +830,33 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 
 func (k *Kademlia) Unvanish(searchKey ID) (data []byte) {
 	data = nil
-	vdo = k.GetVDO(searchkey)
-	data = k.UnvanishData(vdo VanashingDataObject)
+	vdo := k.GetVDOHelper(searchkey)
+	data = k.UnvanishData(vdo)
 	return
 }
 
-func (k *Kademlia) GetVDO(searchkey ID) (vdo VanashingDataObject){
+func (k *Kademlia) GetVDOHelper(searchkey ID) (vdo VanashingDataObject){
+	contact := &k.SelfContact
+	addr := fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port)
+	port_str := strconv.Itoa(int((*contact).Port))
+	path := rpc.DefaultRPCPath + port_str
+	client, err := rpc.DialHTTPPath(
+		"tcp",
+		addr,
+		path,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer client.Close()
 	
+	req := GetVDORequest{k.SelfContact, NewRandomID(), vdoId}
+	var res GetVDOResult
+	err = client.Call("KademliaCore.GetVDO", req, &res)
+	if err != nil {
+		fmt.Println("Err: " + err.Error())
+		return nil
+	} else {
+		return res.VDO
+	}
 }
