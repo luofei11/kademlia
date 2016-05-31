@@ -146,5 +146,13 @@ type GetVDOResult struct {
 
 func (k *KademliaRPC) GetVDO(req GetVDORequest, res *GetVDOResult) error {
 	// TODO: Implement.
+	k.kademlia.VdoMutexLock.Lock()
+	res.MsgID = CopyID(req.MsgID) 
+	if vdo, ok := k.kademlia.Vdos[req.VdoID]; ok {
+		res.VDO = vdo
+	} else {
+		fmt.Printf("Not Found")
+	}
+	k.kademlia.VdoMutexLock.UnLock()
 	return nil
 }

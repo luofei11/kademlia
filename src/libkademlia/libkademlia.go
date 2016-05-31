@@ -32,6 +32,9 @@ type Kademlia struct {
 	table       RoutingTable
 	data        map[ID][]byte
 	channel     KademliaChannel
+	//vdo
+	Vdos        map[ID]VanashingDataObject
+	VdoMutexLock *sync.Mutex
 }
 // KademliaChannel type used for communications
 type KademliaChannel struct{
@@ -57,6 +60,10 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.table.Initialize()
 	k.data = make(map[ID][]byte)
 	k.channel.Initialize()
+	//vdo init
+	k.Vdos = make(map[ID]VanishingDataObject)
+	k.VdoMutexLock = &sync.Mutex{}
+	//vdo init finished
 	go k.HandleUpdate()
 	go k.HandleDataStore()
 	go k.HandleValueLookUp()
@@ -823,7 +830,11 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 
 func (k *Kademlia) Unvanish(searchKey ID) (data []byte) {
 	data = nil
-	vdo = GetVDO(ID)
+	vdo = k.GetVDO(searchkey)
 	data = k.UnvanishData(vdo VanashingDataObject)
 	return
+}
+
+func (k *Kademlia) GetVDO(searchkey ID) (vdo VanashingDataObject){
+	
 }
