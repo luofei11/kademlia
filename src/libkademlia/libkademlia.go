@@ -828,35 +828,64 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 	return
 }
 
-func (k *Kademlia) Unvanish(searchKey ID) (data []byte) {
+func (k *Kademlia) Unvanish(nodeID ID, vdoID ID) (data []byte) {
 	data = nil
-	vdo := k.GetVDOHelper(searchkey)
+	vdo := k.GetVDOHelper(nodeID, vdoID)
 	data = k.UnvanishData(vdo)
 	return
 }
 
-func (k *Kademlia) GetVDOHelper(searchkey ID) (vdo VanashingDataObject){
-	contact := &k.SelfContact
-	addr := fmt.Sprintf("%s:%d", (*contact).Host.String(), (*contact).Port)
-	port_str := strconv.Itoa(int((*contact).Port))
-	path := rpc.DefaultRPCPath + port_str
-	client, err := rpc.DialHTTPPath(
-		"tcp",
-		addr,
-		path,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer client.Close()
-	
-	req := GetVDORequest{k.SelfContact, NewRandomID(), searchkey}
-	var res GetVDOResult
-	err = client.Call("KademliaRPC.GetVDO", req, &res)
-	if err != nil {
-		fmt.Println("Err: " + err.Error())
-		return nil
+func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
+	localcontact, localerr := k.FindContact(nodeID)
+	if localerr == nil {
+		addr := fmt.Sprintf("%s:%d", (*localcontact).Host.String(), (*localcontact).Port)
+		port_str := strconv.Itoa(int((*localcontact).Port))
+		path := rpc.DefaultRPCPath + port_str
+		client, err := rpc.DialHTTPPath(
+			"tcp",
+			addr,
+			path,
+		)
+		if err != nil {
+			return nil
+		}
+		defer client.Close()
+		req := GetVDORequest{k.SelfContact, NewRandomID(), vdoID}
+		var res GetVDOResult
+		err = client.Call("KademliaRPC.GetVDO", req, &res)
+		if err != nil {
+			fmt.Println("Err: " + err.Error())
+			return nil
+		} else {
+			return res.VDO
+		}
 	} else {
-		return res.VDO
+		contacts, _ := k.DoIterativeFindNode(nodeID)
+		for _, con := range contacts {
+			if con.NodeID.Equals(nodeID) {
+				addr := fmt.Sprintf("%s:%d", con.Host.String(), con.Port)
+				port_str := strconv.Itoa(int(con.Port))
+				path := rpc.DefaultRPCPath + port_str
+				client, err := rpc.DialHTTPPath(
+					"tcp",
+					addr,
+					path,
+				)
+				if err != nil {
+					return nil
+				}
+				defer client.Close()
+				req := GetVDORequest{k.SelfContact, NewRandomID(), vdoID}
+				var res GetVDOResult
+				err = client.Call("KademliaRPC.GetVDO", req, &res)
+				if err != nil {
+					fmt.Println("Err: " + err.Error())
+					return nil
+				} else {
+					return res.VDO
+				}
+			}
+		}
 	}
+	return nil
 }
