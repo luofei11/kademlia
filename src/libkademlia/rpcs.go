@@ -88,9 +88,15 @@ type FindNodeResult struct {
 
 func (k *KademliaRPC) FindNode(req FindNodeRequest, res *FindNodeResult) error {
 	// TODO: Implement.
-	k.kademlia.Update(req.Sender)
 	res.MsgID = CopyID(req.MsgID)
 	res.Nodes = k.kademlia.FindClosest(req.NodeID)
+	// Discard the requester's contact from the response list
+	for index, val := range res.Nodes {
+		if val.NodeID.Equals(req.Sender.NodeID){
+			res.Nodes = append(res.Nodes[:index], res.Nodes[index + 1:]...)
+		}
+	}
+	k.kademlia.Update(req.Sender)
 	return nil
 }
 

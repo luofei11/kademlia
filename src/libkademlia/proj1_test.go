@@ -116,7 +116,7 @@ func TestFindNode(t *testing.T) {
 	}
 	tree_node := make([]*Kademlia, 10)
 	required_contacts_map := make(map[string]int)
-	required_contacts_map[fmt.Sprintf("%v", instance1.SelfContact)] = 0
+	//required_contacts_map[fmt.Sprintf("%v", instance1.SelfContact)] = 0
 	for i := 0; i < 10; i++ {
 		address := "localhost:" + strconv.Itoa(7896+i)
 		tree_node[i] = NewKademlia(address)
