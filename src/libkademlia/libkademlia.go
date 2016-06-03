@@ -36,6 +36,7 @@ type Kademlia struct {
 	//vdo
 	Vdos        map[ID]VanashingDataObject
 	VdoMutexLock *sync.Mutex
+	dataLock *sync.Mutex
 }
 // KademliaChannel type used for communications
 type KademliaChannel struct{
@@ -44,6 +45,8 @@ type KademliaChannel struct{
 	storeDataChan chan *KVPair
 	valueLookUpChan chan ID
 	valLookUpResChan chan []byte
+	localFindValueChan chan ID
+	localFindValueResChan chan []byte
 }
 func (kc *KademliaChannel) Initialize(){
 	kc.updateChan = make(chan Contact)
@@ -51,6 +54,8 @@ func (kc *KademliaChannel) Initialize(){
 	kc.storeDataChan = make(chan *KVPair)
 	kc.valueLookUpChan = make(chan ID)
 	kc.valLookUpResChan = make(chan []byte)
+	kc.localFindValueChan = make(chan ID)
+	kc.localFindValueResChan = make(chan []byte)
 }
 
 func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
@@ -64,10 +69,12 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	//vdo init
 	k.Vdos = make(map[ID]VanashingDataObject)
 	k.VdoMutexLock = &sync.Mutex{}
+	k.dataLock = &sync.Mutex{}
 	//vdo init finished
 	go k.HandleUpdate()
 	go k.HandleDataStore()
 	go k.HandleValueLookUp()
+	go k.HandleLocalFindValue()
 	// Set up RPC server
 	// NOTE: KademliaRPC is just a wrapper around Kademlia. This type includes
 	// the RPC functions.
@@ -296,6 +303,16 @@ func (k *Kademlia) HandleDataStore(){
 		k.data[kvpair.key] = kvpair.value
 	}
 }
+func (k *Kademlia) HandleLocalFindValue(){
+	for {
+		searchKey := <- k.channel.localFindValueChan
+		if val, ok := k.data[searchKey]; ok{
+			k.channel.localFindValueResChan <- val
+		} else{
+			k.channel.localFindValueResChan <- nil
+		}
+	}
+}
 func (k *Kademlia) HandleValueLookUp(){
 	for {
 		key := <- k.channel.valueLookUpChan
@@ -347,11 +364,18 @@ func (k *Kademlia) HandleUpdate() {
 ///////////////////////////////////////////////
 func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	// TODO: Implement
-	if val, ok := k.data[searchKey]; ok{
+	k.channel.localFindValueChan <- searchKey
+	val := <- k.channel.localFindValueResChan
+	if val != nil {
 		return val, nil
-	} else{
+	}else {
 		return nil, &ValueNotFoundError{searchKey}
 	}
+	// if val, ok := k.data[searchKey]; ok{
+	// 	return val, nil
+	// } else{
+	// 	return nil, &ValueNotFoundError{searchKey}
+	// }
 }
 func (k *Kademlia) FindClosest(key ID) []Contact {
 	prefixLen := k.NodeID.Xor(key).PrefixLen()
