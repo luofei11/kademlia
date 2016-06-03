@@ -836,10 +836,11 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 
 func (k *Kademlia) Unvanish(nodeID ID, vdoID ID) (data []byte) {
 	data = nil
-	vdo := k.GetVDOHelper(nodeID, vdoID)
-	if vdo != nil {
-	    data = k.UnvanishData(vdo)
-	}
+	var vdo VanashingDataObject
+	vdo = k.GetVDOHelper(nodeID, vdoID)
+	//if vdo != nil {
+	data = k.UnvanishData(vdo)
+	//}
 	return
 }
 
