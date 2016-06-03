@@ -8,6 +8,7 @@ import (
 	mathrand "math/rand"
 	"time"
 	"sss"
+	"fmt"
 )
 
 type VanashingDataObject struct {
@@ -142,11 +143,11 @@ func (k *Kademlia) UnvanishData(vdo VanashingDataObject) (data []byte) {
 			share_map[k] = v
 		}
 	}
-	if len(m) < vdo.Threshold {
+	if len(share_map) < (int)(vdo.Threshold) {
 		fmt.Println("Not Enough Map Items!")
 		return
 	}
-	key = sss.Combine(share_map)
+	key := sss.Combine(share_map)
 	data = decrypt(key, vdo.Ciphertext)
 	return
 }

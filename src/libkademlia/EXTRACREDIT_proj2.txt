@@ -1,0 +1,10 @@
+proj2_test.go
+*********Iterative Function Tests**************
+- TestIterativeFindNodeSimple()
+  Test DoIterativeFindNode function in simple three nodes
+- TestIterativeFindNode()
+  Test DoIterativeFindNode function in a tree of 27 nodes
+- TestIterativeFindValue()
+  Test DoIterativeFindValue function in a tree of 27 nodes
+- TestIterativeStore()
+  Test DoIterativeStore function in a tree of 27 nodes
