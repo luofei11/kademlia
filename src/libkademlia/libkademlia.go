@@ -853,7 +853,8 @@ func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
 			path,
 		)
 		if err != nil {
-			return nil
+			var vdo VanashingDataObject
+			return vdo
 		}
 		defer client.Close()
 		req := GetVDORequest{k.SelfContact, NewRandomID(), vdoID}
