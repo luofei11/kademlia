@@ -99,9 +99,8 @@ func (k *Kademlia) refresh(vdo VanashingDataObject) {
 	for i := vdo.Timeout / 8; i > 0; i-- {
 		select{
 		    case <- time.After(time.Hour * 8):
-					location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)vdo.NumberKeys)
+					location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
 					share_map := make(map[byte][]byte)
-					data = nil
 					for _, id := range location_ids {
 						val, _ := k.DoIterativeFindValue(id)
 						if val != nil {
@@ -125,14 +124,14 @@ func (k *Kademlia) ShareKeys(numberKeys byte, threshold byte, key []byte, access
   share_map, err := sss.Split(numberKeys, threshold, key)
 	share_keys := extractKeysFromMap(share_map)
 	if err == nil {
-		location_ids := CalculateSharedKeyLocations(accessKey, (int64)numberKeys)
-		for i := 0; i < (int)numberKeys; i++ {
+		location_ids := CalculateSharedKeyLocations(accessKey, (int64)(numberKeys))
+		for i := 0; i < (int)(numberKeys); i++ {
 			  k.DoIterativeStore(location_ids[i], share_keys[i])
 		}
 	}
 }
 func (k *Kademlia) UnvanishData(vdo VanashingDataObject) (data []byte) {
-	location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)vdo.NumberKeys)
+	location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
 	share_map := make(map[byte][]byte)
 	data = nil
 	for _, id := range location_ids {

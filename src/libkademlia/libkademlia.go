@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"sort"
 	"time"
+	"sync"
 )
 
 const (
@@ -61,7 +62,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.data = make(map[ID][]byte)
 	k.channel.Initialize()
 	//vdo init
-	k.Vdos = make(map[ID]VanishingDataObject)
+	k.Vdos = make(map[ID]VanashingDataObject)
 	k.VdoMutexLock = &sync.Mutex{}
 	//vdo init finished
 	go k.HandleUpdate()
@@ -829,7 +830,7 @@ func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 	id := NewRandomID()
 	k.VdoMutexLock.Lock()
 	k.Vdos[id] = vdo
-	k.VdoMutexLock.UnLock()
+	k.VdoMutexLock.Unlock()
 	return
 }
 
