@@ -42,6 +42,9 @@ type Kademlia struct {
 type KademliaChannel struct{
 	updateChan chan Contact
 	updateFinishedChan chan bool
+	findContactChan chan ID
+	findContactResultChan chan Contact
+	findContactSucceedChan chan bool
 	storeDataChan chan *KVPair
 	valueLookUpChan chan ID
 	valLookUpResChan chan []byte
@@ -51,6 +54,9 @@ type KademliaChannel struct{
 func (kc *KademliaChannel) Initialize(){
 	kc.updateChan = make(chan Contact)
 	kc.updateFinishedChan = make(chan bool)
+	kc.findContactChan = make(chan ID)
+	kc.findContactResultChan = make(chan Contact)
+	kc.findContactSucceedChan = make(chan bool)
 	kc.storeDataChan = make(chan *KVPair)
 	kc.valueLookUpChan = make(chan ID)
 	kc.valLookUpResChan = make(chan []byte)
@@ -71,7 +77,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 	k.VdoMutexLock = &sync.Mutex{}
 	k.dataLock = &sync.Mutex{}
 	//vdo init finished
-	go k.HandleUpdate()
+	go k.HandleUpdateAndFindContact()
 	go k.HandleDataStore()
 	go k.HandleValueLookUp()
 	go k.HandleLocalFindValue()
@@ -148,11 +154,11 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	if bucketIndex == -1 {
 		return nil, &ContactNotFoundError{nodeId, "Not found"}
 	}
-	kbucket := k.table[bucketIndex]
-	for _, contact := range kbucket {
-		  if contact.NodeID.Equals(nodeId){
-				  return &contact, nil
-			}
+	k.channel.findContactChan <- nodeId
+	contact := <- k.channel.findContactResultChan
+	flag := <- k.channel.findContactSucceedChan
+	if flag {
+		return &contact, nil
 	}
 	return nil, &ContactNotFoundError{nodeId, "Not found"}
 }
@@ -324,39 +330,54 @@ func (k *Kademlia) HandleValueLookUp(){
 			}
 		}
 }
-func (k *Kademlia) HandleUpdate() {
+func (k *Kademlia) HandleUpdateAndFindContact() {
 	for {
-		c := <- k.channel.updateChan
-		//fmt.Println("New Contact to Update:",c)
-		//fmt.Println("Original Kademlia:", k)
-		bucketIndex := k.FindBucket(c.NodeID)
-		if bucketIndex == -1 {
-			k.channel.updateFinishedChan <- true
-			continue
-		}
-		kb := &k.table[bucketIndex]
-		contains, i := kb.FindContactInKBucket(c)
-		if contains {
-			kb.MoveToTail(i)
-		} else {
-			if len(*kb) < cap(*kb) {
-				kb.AddToTail(c)
-				} else {
-					//fmt.Println("filled")
-					head := (*kb)[0]
-					_, err := k.DoPing(head.Host, head.Port)
-					if err != nil {
-						kb.Remove(0)
-						kb.AddToTail(c)
-						} else {
-							kb.MoveToTail(0)
+		select {
+			case c := <- k.channel.updateChan:
+			//fmt.Println("New Contact to Update:",c)
+			//fmt.Println("Original Kademlia:", k)
+			bucketIndex := k.FindBucket(c.NodeID)
+			if bucketIndex == -1 {
+				k.channel.updateFinishedChan <- true
+				continue
+			}
+			kb := &k.table[bucketIndex]
+			contains, i := kb.FindContactInKBucket(c)
+			if contains {
+				kb.MoveToTail(i)
+			} else {
+				if len(*kb) < cap(*kb) {
+					kb.AddToTail(c)
+					} else {
+						//fmt.Println("filled")
+						head := (*kb)[0]
+						_, err := k.DoPing(head.Host, head.Port)
+						if err != nil {
+							kb.Remove(0)
+							kb.AddToTail(c)
+							} else {
+								kb.MoveToTail(0)
+							}
 						}
 					}
+					//fmt.Println("Updated kbucket:", kb)
+					//fmt.Println("Updated Kademlia:", k)
+					k.channel.updateFinishedChan <- true
+			case nodeId := <- k.channel.findContactChan:
+				bucketIndex := k.FindBucket(nodeId)
+				kbucket := k.table[bucketIndex]
+				var contactResult Contact
+				flag := false
+				for _, contact := range kbucket {
+					  if contact.NodeID.Equals(nodeId){
+							  contactResult = contact
+								flag = true
+						}
 				}
-				//fmt.Println("Updated kbucket:", kb)
-				//fmt.Println("Updated Kademlia:", k)
-				k.channel.updateFinishedChan <- true
-			}
+				k.channel.findContactResultChan <- contactResult
+				k.channel.findContactSucceedChan <- flag
+		}
+	}
 }
 
 ///////////////////////////////////////////////
