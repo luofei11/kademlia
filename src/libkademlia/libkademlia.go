@@ -853,7 +853,7 @@ func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
 			path,
 		)
 		if err != nil {
-			return nil
+			return 
 		}
 		defer client.Close()
 		req := GetVDORequest{k.SelfContact, NewRandomID(), vdoID}
@@ -861,7 +861,7 @@ func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
 		err = client.Call("KademliaRPC.GetVDO", req, &res)
 		if err != nil {
 			fmt.Println("Err: " + err.Error())
-			return nil
+			return 
 		} else {
 			return res.VDO
 		}
@@ -878,7 +878,7 @@ func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
 					path,
 				)
 				if err != nil {
-					return nil
+					return 
 				}
 				defer client.Close()
 				req := GetVDORequest{k.SelfContact, NewRandomID(), vdoID}
@@ -886,12 +886,12 @@ func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
 				err = client.Call("KademliaRPC.GetVDO", req, &res)
 				if err != nil {
 					fmt.Println("Err: " + err.Error())
-					return nil
+					return 
 				} else {
 					return res.VDO
 				}
 			}
 		}
 	}
-	return nil
+	return 
 }
