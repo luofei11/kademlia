@@ -73,16 +73,15 @@ func decrypt(key []byte, ciphertext []byte) (text []byte) {
 	return ciphertext
 }
 func extractKeysFromMap(share_map map[byte][]byte) (ret [][]byte) {
-	ret := make([][]byte, 0)
-  for k, v := range share_map{
+	ret = make([][]byte, 0)
+  for k, v := range share_map {
 		  all := append([]byte{k}, v...)
 			ret = append(ret, all)
 	}
 	return
 }
 
-func (k *Kademlia) VanishData(data []byte, numberKeys byte,
-	threshold byte, timeoutSeconds int) (vdo VanashingDataObject) {
+func (k *Kademlia) VanishData(data []byte, numberKeys byte, threshold byte, timeoutSeconds int) (vdo VanashingDataObject) {
 	key := GenerateRandomCryptoKey()
 	accessKey := GenerateRandomAccessKey()
 	ciphertext := encrypt(key, data)

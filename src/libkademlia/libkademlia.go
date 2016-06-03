@@ -825,6 +825,11 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 // For project 3!
 func (k *Kademlia) Vanish(data []byte, numberKeys byte,
 	threshold byte, timeoutSeconds int) (vdo VanashingDataObject) {
+	vdo := k.VanishData(data, numberKeys, threshold, timeoutSeconds)
+	id := NewRandomID()
+	k.VdoMutexLock.Lock()
+	k.Vdos[id] = vdo
+	k.VdoMutexLock.UnLock()
 	return
 }
 
