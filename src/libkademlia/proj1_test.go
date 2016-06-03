@@ -137,13 +137,13 @@ func TestFindNode(t *testing.T) {
 	}
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
-  for _, contact := range contacts{
+	for _, contact := range contacts {
 		_, err := instance1.FindContact(contact.NodeID)
-		if err != nil{
+		if err != nil {
 			t.Error("Contact was not stored!")
 		}
 	}
-	for _, contact := range contacts{
+	for _, contact := range contacts {
 		_, exist := required_contacts_map[fmt.Sprintf("%v", contact)]
 		if exist {
 			required_contacts_map[fmt.Sprintf("%v", contact)] += 1
@@ -156,17 +156,17 @@ func TestFindNode(t *testing.T) {
 			t.Error("Return Contacts Wrong!")
 		}
 	}
-  //contacts_after_findnode := instance1.table.GetContacts()
+	//contacts_after_findnode := instance1.table.GetContacts()
 	newly_stored_contacts := instance1.table.ExcludeContacts(table_before_findnode)
-	for _, new_c := range newly_stored_contacts{
+	for _, new_c := range newly_stored_contacts {
 		flag := false
-		for _, c := range contacts{
-			if new_c.NodeID.Equals(c.NodeID){
+		for _, c := range contacts {
+			if new_c.NodeID.Equals(c.NodeID) {
 				flag = true
 				break
 			}
 		}
-		if !flag{
+		if !flag {
 			t.Error("Some other contacts were stored!")
 		}
 	}
@@ -209,7 +209,7 @@ func TestFindValue(t *testing.T) {
 	if err != nil {
 		t.Error("Could not store value")
 	}
-  table_before_findvalue := instance1.table
+	table_before_findvalue := instance1.table
 	// Given the right keyID, it should return the value
 	foundValue, contacts, err := instance1.DoFindValue(contact2, key)
 	if !bytes.Equal(foundValue, value) {
@@ -225,13 +225,13 @@ func TestFindValue(t *testing.T) {
 
 	// TODO: Check that the correct contacts were stored
 	//       (and no other contacts)
-	for _, contact := range contacts{
+	for _, contact := range contacts {
 		_, err := instance1.FindContact(contact.NodeID)
-		if err != nil{
+		if err != nil {
 			t.Error("Contact was not stored!")
 		}
 	}
-	for _, contact := range contacts{
+	for _, contact := range contacts {
 		_, exist := required_contacts_map[fmt.Sprintf("%v", contact)]
 		if exist {
 			required_contacts_map[fmt.Sprintf("%v", contact)] += 1
@@ -245,15 +245,15 @@ func TestFindValue(t *testing.T) {
 		}
 	}
 	newly_stored_contacts := instance1.table.ExcludeContacts(table_before_findvalue)
-	for _, new_c := range newly_stored_contacts{
+	for _, new_c := range newly_stored_contacts {
 		flag := false
-		for _, c := range contacts{
-			if new_c.NodeID.Equals(c.NodeID){
+		for _, c := range contacts {
+			if new_c.NodeID.Equals(c.NodeID) {
 				flag = true
 				break
 			}
 		}
-		if !flag{
+		if !flag {
 			t.Error("Some other contacts were stored!")
 		}
 	}

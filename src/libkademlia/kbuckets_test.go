@@ -23,7 +23,7 @@ func TestRemove(t *testing.T) {
 		t.Error("Cannot find remote's contact.")
 	}
 	selfkbindex := k.FindBucket(remoteID)
-	fmt.Printf("%s",selfkbindex)
+	fmt.Printf("%s", selfkbindex)
 	kb := &k.table[selfkbindex]
 	contains_1, i := kb.FindContactInKBucket(c)
 	if !contains_1 {
@@ -49,7 +49,7 @@ func TestMoveToTail(t *testing.T) {
 		t.Error("Cannot find remote's contact.")
 	}
 	selfkbindex := k.FindBucket(remoteID)
-	fmt.Printf("%s",selfkbindex)
+	fmt.Printf("%s", selfkbindex)
 	kb := &k.table[selfkbindex]
 	contains, i := kb.FindContactInKBucket(c)
 	if !contains {
@@ -62,9 +62,9 @@ func TestMoveToTail(t *testing.T) {
 	if !contains_2 {
 		t.Error("Can't find remote's contact in self's contact list.")
 	} else {
-		if length - 1 != tail1 {
+		if length-1 != tail1 {
 			t.Error("Can't move to tail.")
-		} 
+		}
 	}
 }
 
@@ -81,7 +81,7 @@ func TestAddToTail(t *testing.T) {
 		t.Error("Cannot find remote's contact.")
 	}
 	selfkbindex := k.FindBucket(remoteID)
-	fmt.Printf("%s",selfkbindex)
+	fmt.Printf("%s", selfkbindex)
 	kb := &k.table[selfkbindex]
 	contains, i := kb.FindContactInKBucket(c)
 	if !contains {
@@ -95,8 +95,8 @@ func TestAddToTail(t *testing.T) {
 	if !contains_3 {
 		t.Error("Can't find remote's contact in self's contact list.")
 	} else {
-		if length - 1 != tail2 {
+		if length-1 != tail2 {
 			t.Error("Can't add to tail.")
-		} 
+		}
 	}
 }

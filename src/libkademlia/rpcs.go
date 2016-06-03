@@ -92,8 +92,8 @@ func (k *KademliaRPC) FindNode(req FindNodeRequest, res *FindNodeResult) error {
 	res.Nodes = k.kademlia.FindClosest(req.NodeID)
 	// Discard the requester's contact from the response list
 	for index, val := range res.Nodes {
-		if val.NodeID.Equals(req.Sender.NodeID){
-			res.Nodes = append(res.Nodes[:index], res.Nodes[index + 1:]...)
+		if val.NodeID.Equals(req.Sender.NodeID) {
+			res.Nodes = append(res.Nodes[:index], res.Nodes[index+1:]...)
 		}
 	}
 	k.kademlia.Update(req.Sender)
@@ -122,17 +122,17 @@ func (k *KademliaRPC) FindValue(req FindValueRequest, res *FindValueResult) erro
 	// TODO: Implement.
 	go k.kademlia.Update(req.Sender)
 	value, err := k.kademlia.LookUpValue(req.Key)
-	if err != nil{
-     //TODO: didn't find value
-		 res.MsgID = CopyID(req.MsgID)
-		 res.Value = nil
-		 res.Nodes = k.kademlia.FindClosest(req.Key)
-		 res.Err = nil
-	}else{
-		 res.MsgID = CopyID(req.MsgID)
-		 res.Value = value
-		 res.Nodes = nil
-		 res.Err = nil
+	if err != nil {
+		//TODO: didn't find value
+		res.MsgID = CopyID(req.MsgID)
+		res.Value = nil
+		res.Nodes = k.kademlia.FindClosest(req.Key)
+		res.Err = nil
+	} else {
+		res.MsgID = CopyID(req.MsgID)
+		res.Value = value
+		res.Nodes = nil
+		res.Err = nil
 	}
 	return nil
 }

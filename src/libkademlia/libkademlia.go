@@ -9,10 +9,10 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
-	"strconv"
 	"sort"
-	"time"
+	"strconv"
 	"sync"
+	"time"
 )
 
 const (
@@ -20,9 +20,10 @@ const (
 	b     = 8 * IDBytes
 	k     = 20
 )
+
 // Key value pair of data
 type KVPair struct {
-	key ID
+	key   ID
 	value []byte
 }
 
@@ -34,24 +35,26 @@ type Kademlia struct {
 	data        map[ID][]byte
 	channel     KademliaChannel
 	//vdo
-	Vdos        map[ID]VanashingDataObject
+	Vdos         map[ID]VanashingDataObject
 	VdoMutexLock *sync.Mutex
-	dataLock *sync.Mutex
+	dataLock     *sync.Mutex
 }
+
 // KademliaChannel type used for communications
-type KademliaChannel struct{
-	updateChan chan Contact
-	updateFinishedChan chan bool
-	findContactChan chan ID
-	findContactResultChan chan Contact
+type KademliaChannel struct {
+	updateChan             chan Contact
+	updateFinishedChan     chan bool
+	findContactChan        chan ID
+	findContactResultChan  chan Contact
 	findContactSucceedChan chan bool
-	storeDataChan chan *KVPair
-	valueLookUpChan chan ID
-	valLookUpResChan chan []byte
-	localFindValueChan chan ID
-	localFindValueResChan chan []byte
+	storeDataChan          chan *KVPair
+	valueLookUpChan        chan ID
+	valLookUpResChan       chan []byte
+	localFindValueChan     chan ID
+	localFindValueResChan  chan []byte
 }
-func (kc *KademliaChannel) Initialize(){
+
+func (kc *KademliaChannel) Initialize() {
 	kc.updateChan = make(chan Contact)
 	kc.updateFinishedChan = make(chan bool)
 	kc.findContactChan = make(chan ID)
@@ -119,6 +122,7 @@ func NewKademliaWithId(laddr string, nodeID ID) *Kademlia {
 func NewKademlia(laddr string) *Kademlia {
 	return NewKademliaWithId(laddr, NewRandomID())
 }
+
 //////////////////////////////////
 //Error types
 //////////////////////////////////
@@ -126,12 +130,13 @@ type ContactNotFoundError struct {
 	id  ID
 	msg string
 }
-type ValueNotFoundError struct{
+type ValueNotFoundError struct {
 	key ID
 }
 type CommandFailed struct {
 	msg string
 }
+
 func (e *ContactNotFoundError) Error() string {
 	return fmt.Sprintf("%x %s", e.id, e.msg)
 }
@@ -141,7 +146,6 @@ func (e *ValueNotFoundError) Error() string {
 func (e *CommandFailed) Error() string {
 	return fmt.Sprintf("%s", e.msg)
 }
-
 
 func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 	// TODO: Search through contacts, find specified ID
@@ -155,8 +159,8 @@ func (k *Kademlia) FindContact(nodeId ID) (*Contact, error) {
 		return nil, &ContactNotFoundError{nodeId, "Not found"}
 	}
 	k.channel.findContactChan <- nodeId
-	contact := <- k.channel.findContactResultChan
-	flag := <- k.channel.findContactSucceedChan
+	contact := <-k.channel.findContactResultChan
+	flag := <-k.channel.findContactSucceedChan
 	if flag {
 		return &contact, nil
 	}
@@ -172,16 +176,16 @@ func (k *Kademlia) DoPing(host net.IP, port uint16) (*Contact, error) {
 	port_str := fmt.Sprintf("%v", port)
 	path := rpc.DefaultRPCPath + port_str
 	client, err := rpc.DialHTTPPath("tcp", addr, path)
-	if err != nil{
-		  return nil, &CommandFailed{
-				"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
+	if err != nil {
+		return nil, &CommandFailed{
+			"Unable to ping " + fmt.Sprintf("%s:%v", host.String(), port)}
 	}
 	defer client.Close()
 	ping := PingMessage{k.SelfContact, NewRandomID()}
 	var pong PongMessage
 	err = client.Call("KademliaRPC.Ping", ping, &pong)
-	if err != nil{
-		  return nil, err
+	if err != nil {
+		return nil, err
 	}
 
 	k.Update(pong.Sender)
@@ -225,7 +229,7 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 		rpc.DefaultRPCPath+port_str,
 	)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
 	defer client.Close()
 	req := FindNodeRequest{k.SelfContact, NewRandomID(), searchKey}
@@ -233,7 +237,7 @@ func (k *Kademlia) DoFindNode(contact *Contact, searchKey ID) ([]Contact, error)
 	err = client.Call("KademliaRPC.FindNode", req, &res)
 	if err != nil {
 		client.Close()
-		return nil ,err
+		return nil, err
 	}
 	for _, each := range res.Nodes {
 		k.Update(each)
@@ -276,64 +280,62 @@ func (k *Kademlia) DoFindValue(contact *Contact,
 	return nil, nil, &CommandFailed{"Value Not Found"}
 }
 
-
 ///////////////////////////////////////////
 //Interfaces of kademlia
 ///////////////////////////////////////////
-func (k * Kademlia) StoreData(pair *KVPair){
+func (k *Kademlia) StoreData(pair *KVPair) {
 	k.channel.storeDataChan <- pair
 }
 func (k *Kademlia) Update(c Contact) {
-  //Update KBucket in Routing Table by Contact c
+	//Update KBucket in Routing Table by Contact c
 	k.channel.updateChan <- c
-	_ = <- k.channel.updateFinishedChan
+	_ = <-k.channel.updateFinishedChan
 }
-func (k *Kademlia) LookUpValue(key ID) ([]byte, error){
+func (k *Kademlia) LookUpValue(key ID) ([]byte, error) {
 	//TODO: add lookup request to channel
 	k.channel.valueLookUpChan <- key
-	valLookUpResult := <- k.channel.valLookUpResChan
-	if valLookUpResult != nil{
-		  return valLookUpResult, nil
-	}else{
-		  return nil, &ValueNotFoundError{key}
+	valLookUpResult := <-k.channel.valLookUpResChan
+	if valLookUpResult != nil {
+		return valLookUpResult, nil
+	} else {
+		return nil, &ValueNotFoundError{key}
 	}
 }
-
 
 ///////////////////////////////////////////
 //Channel handlers of kademlia
 ///////////////////////////////////////////
-func (k *Kademlia) HandleDataStore(){
+func (k *Kademlia) HandleDataStore() {
 	for {
-		kvpair := <- k.channel.storeDataChan
+		kvpair := <-k.channel.storeDataChan
 		k.data[kvpair.key] = kvpair.value
 	}
 }
-func (k *Kademlia) HandleLocalFindValue(){
+func (k *Kademlia) HandleLocalFindValue() {
 	for {
-		searchKey := <- k.channel.localFindValueChan
-		if val, ok := k.data[searchKey]; ok{
+		searchKey := <-k.channel.localFindValueChan
+		if val, ok := k.data[searchKey]; ok {
 			k.channel.localFindValueResChan <- val
-		} else{
+		} else {
 			k.channel.localFindValueResChan <- nil
 		}
 	}
 }
-func (k *Kademlia) HandleValueLookUp(){
+func (k *Kademlia) HandleValueLookUp() {
 	for {
-		key := <- k.channel.valueLookUpChan
+		key := <-k.channel.valueLookUpChan
 		val, err := k.LocalFindValue(key)
-		if err != nil{
+		if err != nil {
 			k.channel.valLookUpResChan <- nil
-			}else{
-				k.channel.valLookUpResChan <- val
-			}
+		} else {
+			k.channel.valLookUpResChan <- val
 		}
+	}
 }
 func (k *Kademlia) HandleUpdateAndFindContact() {
 	for {
 		select {
-			case c := <- k.channel.updateChan:
+		case c := <-k.channel.updateChan:
 			//fmt.Println("New Contact to Update:",c)
 			//fmt.Println("Original Kademlia:", k)
 			bucketIndex := k.FindBucket(c.NodeID)
@@ -348,34 +350,34 @@ func (k *Kademlia) HandleUpdateAndFindContact() {
 			} else {
 				if len(*kb) < cap(*kb) {
 					kb.AddToTail(c)
+				} else {
+					//fmt.Println("filled")
+					head := (*kb)[0]
+					_, err := k.DoPing(head.Host, head.Port)
+					if err != nil {
+						kb.Remove(0)
+						kb.AddToTail(c)
 					} else {
-						//fmt.Println("filled")
-						head := (*kb)[0]
-						_, err := k.DoPing(head.Host, head.Port)
-						if err != nil {
-							kb.Remove(0)
-							kb.AddToTail(c)
-							} else {
-								kb.MoveToTail(0)
-							}
-						}
+						kb.MoveToTail(0)
 					}
-					//fmt.Println("Updated kbucket:", kb)
-					//fmt.Println("Updated Kademlia:", k)
-					k.channel.updateFinishedChan <- true
-			case nodeId := <- k.channel.findContactChan:
-				bucketIndex := k.FindBucket(nodeId)
-				kbucket := k.table[bucketIndex]
-				var contactResult Contact
-				flag := false
-				for _, contact := range kbucket {
-					  if contact.NodeID.Equals(nodeId){
-							  contactResult = contact
-								flag = true
-						}
 				}
-				k.channel.findContactResultChan <- contactResult
-				k.channel.findContactSucceedChan <- flag
+			}
+			//fmt.Println("Updated kbucket:", kb)
+			//fmt.Println("Updated Kademlia:", k)
+			k.channel.updateFinishedChan <- true
+		case nodeId := <-k.channel.findContactChan:
+			bucketIndex := k.FindBucket(nodeId)
+			kbucket := k.table[bucketIndex]
+			var contactResult Contact
+			flag := false
+			for _, contact := range kbucket {
+				if contact.NodeID.Equals(nodeId) {
+					contactResult = contact
+					flag = true
+				}
+			}
+			k.channel.findContactResultChan <- contactResult
+			k.channel.findContactSucceedChan <- flag
 		}
 	}
 }
@@ -386,10 +388,10 @@ func (k *Kademlia) HandleUpdateAndFindContact() {
 func (k *Kademlia) LocalFindValue(searchKey ID) ([]byte, error) {
 	// TODO: Implement
 	k.channel.localFindValueChan <- searchKey
-	val := <- k.channel.localFindValueResChan
+	val := <-k.channel.localFindValueResChan
 	if val != nil {
 		return val, nil
-	}else {
+	} else {
 		return nil, &ValueNotFoundError{searchKey}
 	}
 	// if val, ok := k.data[searchKey]; ok{
@@ -403,7 +405,7 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 	var index int
 	if prefixLen == 160 {
 		index = 0
-		} else {
+	} else {
 		index = 159 - prefixLen
 	}
 	contacts := make([]Contact, 0, 20)
@@ -422,7 +424,7 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 	//If the target kbucket has less than k contact, search higher bucket first, then lower bucket
 	higher := index
 	lower := index
-	for  {
+	for {
 		if len(contacts) >= 20 {
 			return contacts
 		}
@@ -452,23 +454,23 @@ func (k *Kademlia) FindClosest(key ID) []Contact {
 	}
 	return contacts
 }
-func (k *Kademlia) FindBucket(nodeId ID) int{
+func (k *Kademlia) FindBucket(nodeId ID) int {
 	//find the bucket the node falls into, return the index
-	if k.NodeID.Equals(nodeId){
+	if k.NodeID.Equals(nodeId) {
 		return -1
 	}
 	return (IDBits - 1) - k.NodeID.Xor(nodeId).PrefixLen()
 }
 
-
 // For project 2!
 type ShortListElement struct {
-	contact Contact
+	contact  Contact
 	distance int
-	status int//0 default, 1 inactive, 2 active
+	status   int //0 default, 1 inactive, 2 active
 	hasValue bool
 }
 type ShortListElements []ShortListElement
+
 func (slice ShortListElements) Len() int {
 	return len(slice)
 }
@@ -495,15 +497,15 @@ func NotEnoughActive(ContactedList []ShortListElement) bool {
 
 type IterFindNodeResult struct {
 	Receiver Contact
-	Nodes []Contact
-	Err   error
+	Nodes    []Contact
+	Err      error
 }
 
 type IterFindValueResult struct {
 	receiver Contact
-	val []byte
+	val      []byte
 	contacts []Contact
-	err error
+	err      error
 }
 
 func (k *Kademlia) iteFindNodeHelper(server ShortListElement, id ID, iterFindNodeChan chan IterFindNodeResult) {
@@ -547,7 +549,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 		ClosestDistanceNow = ShortList[0].distance
 	}
 
-	for (ClosestDistanceNow < ClosestDistancePre && NotEnoughActive(ContactedList)){
+	for ClosestDistanceNow < ClosestDistancePre && NotEnoughActive(ContactedList) {
 		ClosestDistancePre = ClosestDistanceNow
 		ProbingList = nil
 		//dump(ProbingList)
@@ -569,66 +571,66 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 		}
 		allreceive := false
 
-		for !timeout && !allreceive{
+		for !timeout && !allreceive {
 			select {
-				case res := <- iterFindNodeChan:
-					for index, val := range ProbingList {
-						if val.contact.NodeID.Equals(res.Receiver.NodeID){
-							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
-							if res.Err != nil {
-								one_shortlist_element.status = 1
-							} else {
-								one_shortlist_element.status = 2
-							}
-							ContactedList = append(ContactedList, one_shortlist_element)
+			case res := <-iterFindNodeChan:
+				for index, val := range ProbingList {
+					if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+						ProbingList = append(ProbingList[:index], ProbingList[index+1:]...)
+						one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
+						if res.Err != nil {
+							one_shortlist_element.status = 1
+						} else {
+							one_shortlist_element.status = 2
+						}
+						ContactedList = append(ContactedList, one_shortlist_element)
+					}
+				}
+				// inContactedList := false
+				// for _, val := range ContactedList {
+				// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+				// 		if res.Err != nil {
+				// 			val.status = 1
+				// 		} else {
+				// 			val.status = 2
+				// 		}
+				// 		inContactedList = true
+				// 	}
+				// }
+				// if !inContactedList {
+				// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+				// 	if res.Err != nil {
+				// 		one_shortlist_element.status = 1
+				// 	} else {
+				// 		one_shortlist_element.status = 2
+				// 	}
+				// 	ContactedList = append(ContactedList, one_shortlist_element)
+				// }
+				if res.Err == nil {
+					for _, val := range res.Nodes {
+						one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
+						if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element) {
+							ShortList = append(ShortList, one_shortlist_element)
 						}
 					}
+				}
+				if len(ProbingList) == 0 {
+					allreceive = true
+				}
+			case timeout = <-timeOutChan:
+				for _, probingval := range ProbingList {
 					// inContactedList := false
-					// for _, val := range ContactedList {
-					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
-					// 		if res.Err != nil {
-					// 			val.status = 1
-					// 		} else {
-					// 			val.status = 2
-					// 		}
+					// for _, contactedval := range ContactedList {
+					// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+					// 		contactedval.status = 1
 					// 		inContactedList = true
 					// 	}
 					// }
 					// if !inContactedList {
-					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
-					// 	if res.Err != nil {
-					// 		one_shortlist_element.status = 1
-					// 	} else {
-					// 		one_shortlist_element.status = 2
-					// 	}
-					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					probingval.status = 1
+					ContactedList = append(ContactedList, probingval)
 					// }
-					if res.Err == nil {
-						for _, val := range res.Nodes {
-							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
-							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
-								ShortList = append(ShortList, one_shortlist_element)
-							}
-						}
-					}
-					if len(ProbingList) == 0 {
-						allreceive = true
-					}
-				case timeout =<- timeOutChan:
-					for _, probingval := range ProbingList {
-						// inContactedList := false
-						// for _, contactedval := range ContactedList {
-						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
-						// 		contactedval.status = 1
-						// 		inContactedList = true
-						// 	}
-						// }
-						// if !inContactedList {
-							probingval.status = 1
-							ContactedList = append(ContactedList, probingval)
-						// }
-					}
+				}
 			}
 		}
 		sort.Sort(ShortListElements(ShortList))
@@ -637,7 +639,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 		}
 	}
 
-	for (NotEnoughActive(ContactedList) && len(ShortList) > 0){
+	for NotEnoughActive(ContactedList) && len(ShortList) > 0 {
 		ProbingList = nil
 		//dump(ProbingList)
 		i := 0
@@ -658,66 +660,66 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 		}
 		allreceive := false
 
-		for !timeout && !allreceive{
+		for !timeout && !allreceive {
 			select {
-				case res := <- iterFindNodeChan:
-					for index, val := range ProbingList {
-						if val.contact.NodeID.Equals(res.Receiver.NodeID){
-							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-							one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
-							if res.Err != nil {
-								one_shortlist_element.status = 1
-							} else {
-								one_shortlist_element.status = 2
-							}
-							ContactedList = append(ContactedList, one_shortlist_element)
+			case res := <-iterFindNodeChan:
+				for index, val := range ProbingList {
+					if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+						ProbingList = append(ProbingList[:index], ProbingList[index+1:]...)
+						one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0, false}
+						if res.Err != nil {
+							one_shortlist_element.status = 1
+						} else {
+							one_shortlist_element.status = 2
+						}
+						ContactedList = append(ContactedList, one_shortlist_element)
+					}
+				}
+				// inContactedList := false
+				// for _, val := range ContactedList {
+				// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
+				// 		if res.Err != nil {
+				// 			val.status = 1
+				// 		} else {
+				// 			val.status = 2
+				// 		}
+				// 		inContactedList = true
+				// 	}
+				// }
+				// if !inContactedList {
+				// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
+				// 	if res.Err != nil {
+				// 		one_shortlist_element.status = 1
+				// 	} else {
+				// 		one_shortlist_element.status = 2
+				// 	}
+				// 	ContactedList = append(ContactedList, one_shortlist_element)
+				// }
+				if res.Err == nil {
+					for _, val := range res.Nodes {
+						one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
+						if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element) {
+							ShortList = append(ShortList, one_shortlist_element)
 						}
 					}
+				}
+				if len(ProbingList) == 0 {
+					allreceive = true
+				}
+			case timeout = <-timeOutChan:
+				for _, probingval := range ProbingList {
 					// inContactedList := false
-					// for _, val := range ContactedList {
-					// 	if val.contact.NodeID.Equals(res.Receiver.NodeID) {
-					// 		if res.Err != nil {
-					// 			val.status = 1
-					// 		} else {
-					// 			val.status = 2
-					// 		}
+					// for _, contactedval := range ContactedList {
+					// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
+					// 		contactedval.status = 1
 					// 		inContactedList = true
 					// 	}
 					// }
 					// if !inContactedList {
-					// 	one_shortlist_element := ShortListElement{res.Receiver, 159 - id.Xor(res.Receiver.NodeID).PrefixLen(), 0}
-					// 	if res.Err != nil {
-					// 		one_shortlist_element.status = 1
-					// 	} else {
-					// 		one_shortlist_element.status = 2
-					// 	}
-					// 	ContactedList = append(ContactedList, one_shortlist_element)
+					probingval.status = 1
+					ContactedList = append(ContactedList, probingval)
 					// }
-					if res.Err == nil {
-						for _, val := range res.Nodes {
-							one_shortlist_element := ShortListElement{val, 159 - id.Xor(val.NodeID).PrefixLen(), 0, false}
-							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element){
-								ShortList = append(ShortList, one_shortlist_element)
-							}
-						}
-					}
-					if len(ProbingList) == 0 {
-						allreceive = true
-					}
-				case timeout =<- timeOutChan:
-					for _, probingval := range ProbingList {
-						// inContactedList := false
-						// for _, contactedval := range ContactedList {
-						// 	if probingval.contact.NodeID.Equals(contactedval.contact.NodeID) {
-						// 		contactedval.status = 1
-						// 		inContactedList = true
-						// 	}
-						// }
-						// if !inContactedList {
-							probingval.status = 1
-							ContactedList = append(ContactedList, probingval)
-						// }
-					}
+				}
 			}
 		}
 		sort.Sort(ShortListElements(ShortList))
@@ -738,7 +740,7 @@ func (k *Kademlia) DoIterativeFindNode(id ID) ([]Contact, error) {
 }
 
 func (k *Kademlia) DoIterativeStore(key ID, value []byte) ([]Contact, error) {
-	contacts, _:= k.DoIterativeFindNode(key)
+	contacts, _ := k.DoIterativeFindNode(key)
 	ResultList := make([]Contact, 0, 30)
 	for _, con := range contacts {
 		errormsg := k.DoStore(&con, key, value)
@@ -795,51 +797,51 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		allreceive := false
 		for !timeout && !allreceive {
 			select {
-			case res := <- iterFindValueChan:
-				  //fmt.Println("I received something:", res.val)
-					for index, val := range ProbingList {
-						if val.contact.NodeID.Equals(res.receiver.NodeID) {
-							ProbingList = append(ProbingList[:index], ProbingList[index + 1:]...)
-							one_shortlist_element := ShortListElement{res.receiver, 159 - key.Xor(res.receiver.NodeID).PrefixLen(), 0, false}
-							if res.err != nil {
-								one_shortlist_element.status = 1
-							} else {
-								one_shortlist_element.status = 2
-							}
-							if res.val != nil {
-								one_shortlist_element.hasValue = true
-								valueFound = true
-								finalValue = res.val
-								//fmt.Println("final Value is :", finalValue)
-							} else {
-								one_shortlist_element.hasValue = false
-								//fmt.Println("didn't find value")
-								//fmt.Println("finalValue is:", finalValue)
-							}
-							ContactedList = append(ContactedList, one_shortlist_element)
+			case res := <-iterFindValueChan:
+				//fmt.Println("I received something:", res.val)
+				for index, val := range ProbingList {
+					if val.contact.NodeID.Equals(res.receiver.NodeID) {
+						ProbingList = append(ProbingList[:index], ProbingList[index+1:]...)
+						one_shortlist_element := ShortListElement{res.receiver, 159 - key.Xor(res.receiver.NodeID).PrefixLen(), 0, false}
+						if res.err != nil {
+							one_shortlist_element.status = 1
+						} else {
+							one_shortlist_element.status = 2
+						}
+						if res.val != nil {
+							one_shortlist_element.hasValue = true
+							valueFound = true
+							finalValue = res.val
+							//fmt.Println("final Value is :", finalValue)
+						} else {
+							one_shortlist_element.hasValue = false
+							//fmt.Println("didn't find value")
+							//fmt.Println("finalValue is:", finalValue)
+						}
+						ContactedList = append(ContactedList, one_shortlist_element)
+					}
+				}
+
+				if res.err == nil {
+					for _, val := range res.contacts {
+						one_shortlist_element := ShortListElement{val, 159 - key.Xor(val.NodeID).PrefixLen(), 0, false}
+						if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element) {
+							ShortList = append(ShortList, one_shortlist_element)
 						}
 					}
+				}
+				if len(ProbingList) == 0 {
+					allreceive = true
+					//fmt.Println("All received")
+				}
 
-					if res.err == nil {
-						for _, val := range res.contacts {
-							one_shortlist_element := ShortListElement{val, 159 - key.Xor(val.NodeID).PrefixLen(), 0, false}
-							if notInList(ShortList, one_shortlist_element) && notInList(ProbingList, one_shortlist_element) && notInList(ContactedList, one_shortlist_element) {
-								ShortList = append(ShortList, one_shortlist_element)
-							}
-						}
-					}
-					if len(ProbingList) == 0 {
-						allreceive = true
-						//fmt.Println("All received")
-					}
-
-				case timeout= <- timeOutChan:
-					//fmt.Println("timeout!!!!!!")
-					for _, probingval := range ProbingList {
-							probingval.status = 1
-							probingval.hasValue = false
-							ContactedList = append(ContactedList, probingval)
-					}
+			case timeout = <-timeOutChan:
+				//fmt.Println("timeout!!!!!!")
+				for _, probingval := range ProbingList {
+					probingval.status = 1
+					probingval.hasValue = false
+					ContactedList = append(ContactedList, probingval)
+				}
 			}
 		}
 		sort.Sort(ShortListElements(ShortList))
@@ -848,25 +850,24 @@ func (k *Kademlia) DoIterativeFindValue(key ID) (value []byte, err error) {
 		}
 	}
 	sort.Sort(ShortListElements(ContactedList))
-  close(iterFindValueChan)
+	close(iterFindValueChan)
 
-  if valueFound {
-		  //fmt.Println("I found value1: !", finalValue)
-			for _, con := range ContactedList{
-				if (con.status == 2 && !con.hasValue) {
-					k.DoStore(&con.contact, key, finalValue)
-					return finalValue, nil
-				}
+	if valueFound {
+		//fmt.Println("I found value1: !", finalValue)
+		for _, con := range ContactedList {
+			if con.status == 2 && !con.hasValue {
+				k.DoStore(&con.contact, key, finalValue)
+				return finalValue, nil
 			}
-			return finalValue, nil
+		}
+		return finalValue, nil
 	} else {
-		  //fmt.Println("Did I enter this condition1?")
-      return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
+		//fmt.Println("Did I enter this condition1?")
+		return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	}
 	return nil, &ValueNotFoundError{ContactedList[0].contact.NodeID}
 	//return nil, &CommandFailed{"Not implemented"}
 }
-
 
 // For project 3!
 func (k *Kademlia) Vanish(data []byte, numberKeys byte,
@@ -886,7 +887,7 @@ func (k *Kademlia) Unvanish(nodeID ID, vdoID ID) (data []byte) {
 	return
 }
 
-func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject){
+func (k *Kademlia) GetVDOHelper(nodeID ID, vdoID ID) (vdo VanashingDataObject) {
 	localcontact, localerr := k.FindContact(nodeID)
 	if localerr == nil {
 		addr := fmt.Sprintf("%s:%d", (*localcontact).Host.String(), (*localcontact).Port)

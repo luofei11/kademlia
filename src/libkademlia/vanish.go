@@ -4,11 +4,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"fmt"
 	"io"
 	mathrand "math/rand"
-	"time"
 	"sss"
-	"fmt"
+	"time"
 )
 
 type VanashingDataObject struct {
@@ -75,9 +75,9 @@ func decrypt(key []byte, ciphertext []byte) (text []byte) {
 }
 func extractKeysFromMap(share_map map[byte][]byte) (ret [][]byte) {
 	ret = make([][]byte, 0)
-  for k, v := range share_map {
-		  all := append([]byte{k}, v...)
-			ret = append(ret, all)
+	for k, v := range share_map {
+		all := append([]byte{k}, v...)
+		ret = append(ret, all)
 	}
 	return
 }
@@ -98,36 +98,36 @@ func (k *Kademlia) VanishData(data []byte, numberKeys byte, threshold byte, time
 
 func (k *Kademlia) refresh(vdo VanashingDataObject) {
 	for i := vdo.Timeout / 8; i > 0; i-- {
-		select{
-		    case <- time.After(time.Hour * 8):
-					// location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
-					// share_map := make(map[byte][]byte)
-					// for _, id := range location_ids {
-					// 	val, _ := k.DoIterativeFindValue(id)
-					// 	if val != nil {
-					// 		k := val[0]
-					// 		v := val[1:]
-					// 		share_map[k] = v
-					// 	}
-					// }
-					// if len(m) < vdo.Threshold {
-					// 	fmt.Println("Not Enough Map Items!")
-					// 	return
-					// }
-					// key = sss.Combine(share_map)
-					// if key != nil{
-					// 	k.ShareKeys(vdo.NumberKeys, vdo.Threshold, key, vdo.AccessKey)
-					// }
+		select {
+		case <-time.After(time.Hour * 8):
+			// location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
+			// share_map := make(map[byte][]byte)
+			// for _, id := range location_ids {
+			// 	val, _ := k.DoIterativeFindValue(id)
+			// 	if val != nil {
+			// 		k := val[0]
+			// 		v := val[1:]
+			// 		share_map[k] = v
+			// 	}
+			// }
+			// if len(m) < vdo.Threshold {
+			// 	fmt.Println("Not Enough Map Items!")
+			// 	return
+			// }
+			// key = sss.Combine(share_map)
+			// if key != nil{
+			// 	k.ShareKeys(vdo.NumberKeys, vdo.Threshold, key, vdo.AccessKey)
+			// }
 		}
 	}
 }
 func (k *Kademlia) ShareKeys(numberKeys byte, threshold byte, key []byte, accessKey int64) {
-  share_map, err := sss.Split(numberKeys, threshold, key)
+	share_map, err := sss.Split(numberKeys, threshold, key)
 	share_keys := extractKeysFromMap(share_map)
 	if err == nil {
 		location_ids := CalculateSharedKeyLocations(accessKey, (int64)(numberKeys))
 		for i := 0; i < (int)(numberKeys); i++ {
-			  k.DoIterativeStore(location_ids[i], share_keys[i])
+			k.DoIterativeStore(location_ids[i], share_keys[i])
 		}
 	}
 }
