@@ -99,24 +99,24 @@ func (k *Kademlia) refresh(vdo VanashingDataObject) {
 	for i := vdo.Timeout / 8; i > 0; i-- {
 		select{
 		    case <- time.After(time.Hour * 8):
-					location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
-					share_map := make(map[byte][]byte)
-					for _, id := range location_ids {
-						val, _ := k.DoIterativeFindValue(id)
-						if val != nil {
-							k := val[0]
-							v := val[1:]
-							share_map[k] = v
-						}
-					}
-					if len(m) < vdo.Threshold {
-						fmt.Println("Not Enough Map Items!")
-						return
-					}
-					key = sss.Combine(share_map)
-					if key != nil{
-						k.ShareKeys(vdo.NumberKeys, vdo.Threshold, key, vdo.AccessKey)
-					}
+					// location_ids := CalculateSharedKeyLocations(vdo.AccessKey, (int64)(vdo.NumberKeys))
+					// share_map := make(map[byte][]byte)
+					// for _, id := range location_ids {
+					// 	val, _ := k.DoIterativeFindValue(id)
+					// 	if val != nil {
+					// 		k := val[0]
+					// 		v := val[1:]
+					// 		share_map[k] = v
+					// 	}
+					// }
+					// if len(m) < vdo.Threshold {
+					// 	fmt.Println("Not Enough Map Items!")
+					// 	return
+					// }
+					// key = sss.Combine(share_map)
+					// if key != nil{
+					// 	k.ShareKeys(vdo.NumberKeys, vdo.Threshold, key, vdo.AccessKey)
+					// }
 		}
 	}
 }
