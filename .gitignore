@@ -3,5 +3,6 @@
 bin/
 pkg/
 
-EXTRACREDIT
+# for submission
+*.txt
 
